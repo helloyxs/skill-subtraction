@@ -15,6 +15,8 @@
 
 import json
 import os
+import sys
+import re
 import time
 from pathlib import Path
 
@@ -47,6 +49,38 @@ def parse_frontmatter(content: str) -> dict:
                 value = True
             elif value.lower() == 'false':
                 value = False
+            meta[key] = value
+    return meta
+
+
+def get_dir_info(path: Path) -> dict:
+    """获取目录的文件数和大小。"""
+    file_count = 0
+    total_size = 0
+    for root, dirs, files in os.walk(path):
+        for f in files:
+            file_path = os.path.join(root, f)
+            try:
+                total_size += os.path.getsize(file_path)
+                file_count += 1
+            except OSError:
+                pass
+    return {
+        'file_count': file_count,
+        'dir_size_kb': round(total_size / 1024, 1)
+    }
+
+
+def get_latest_mtime(path: Path) -> str:
+    """获取目录中最近修改的文件时间。"""
+    latest = 0
+    for root, dirs, files in os.walk(path):
+        for f in files:
+            file_path = os.path.join(root, f)
+            try:
+                mtime = os.path.getmtime(file_path)
+                if mtime > latest:
+                    latest = mtime
             except OSError:
                 pass
     if latest == 0:
@@ -82,6 +116,12 @@ def scan_skill_dir(skill_path: Path, agent: str, scope: str) -> dict | None:
     skill_md = skill_path / 'SKILL.md'
     if not skill_md.exists():
         return None
+
+    try:
+        content = skill_md.read_text(encoding='utf-8')
+    except Exception:
+        return None
+
     meta = parse_frontmatter(content)
     dir_info = get_dir_info(skill_path)
     latest_mtime = get_latest_mtime(skill_path)
@@ -102,6 +142,13 @@ def scan_skill_dir(skill_path: Path, agent: str, scope: str) -> dict | None:
         'path': str(skill_path),
         'description': summary,
         'agent_created': meta.get('agent_created', False),
+        'disable_model_invocation': bool(disable_invocation),
+        'has_scripts': has_scripts,
+        'has_references': has_references,
+        'has_assets': has_assets,
+        'file_count': dir_info['file_count'],
+        'dir_size_kb': dir_info['dir_size_kb'],
+        'last_modified': latest_mtime,
         'version': meta.get('version', 'unknown')
     }
 
@@ -217,3 +264,9 @@ def main():
         'project_skills': sum(1 for s in skills if s['scope'] == 'project'),
         'skills': skills
     }
+
+    print(json.dumps(output, ensure_ascii=False, indent=2))
+
+
+if __name__ == '__main__':
+    main()

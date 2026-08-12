@@ -36,14 +36,25 @@ agent_created: true
 
 ### 第一步：扫描已安装技能
 
-运行审计脚本，扫描两个位置的已安装技能：
+运行审计脚本，自动检测当前脚本所在的 Agent 平台，只扫描该平台下的已安装技能：
 
 ```bash
+# 自动检测当前 Agent，扫描同级技能（推荐）
 python3 scripts/audit_skills.py
+
+# 手动指定 Agent
+python3 scripts/audit_skills.py --agent codex
+
+# 扫描所有已安装的 Agent 平台
+python3 scripts/audit_skills.py --all
+
+# 同时扫描项目级技能
+python3 scripts/audit_skills.py --workspace /path/to/workspace
 ```
 
 脚本输出 JSON 数组，每个元素包含：
 - `name`：技能名称
+- `agent`：所属 Agent 平台（自动检测，如 workbuddy / codex / claude）
 - `scope`：作用域（user / project）
 - `path`：技能目录路径
 - `description`：技能描述（从 frontmatter 提取）
@@ -53,6 +64,7 @@ python3 scripts/audit_skills.py
 - `file_count`：文件总数
 - `dir_size`：目录大小（KB）
 - `last_modified`：最近修改时间
+- `version`：技能版本
 
 ### 第二步：分类评估
 
@@ -132,10 +144,13 @@ python3 scripts/audit_skills.py
 
 输出报告后，询问用户是否要执行清理操作。**不擅自卸载任何技能**。
 
-用户确认后：
-- **卸载**：使用 SkillManage 删除技能
-- **归档**：将技能的 SKILL.md 和关键配置文件内容保存到 `~/.workbuddy/skill-archive/<skill-name>.md`，然后卸载技能
-- **保留**：不做操作
+用户可选择：
+
+- **执行清理**：用户确认后按建议逐项操作
+  - **卸载**：使用 SkillManage 删除技能
+  - **归档**：将技能的 SKILL.md 和关键配置文件内容保存到 `~/.workbuddy/skill-archive/<skill-name>.md`，然后卸载技能
+  - **保留**：不做操作
+- **仅查看报告**：不做任何操作，用户自行决定后续行动
 
 每一步操作前都向用户展示将要执行的动作，获得明确确认后才执行。
 
