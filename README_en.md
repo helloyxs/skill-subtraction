@@ -65,7 +65,7 @@ The skill auto-triggers and executes a 5-step workflow:
 
 1. **Scan** — Run `audit_skills.py` to collect metadata for all installed skills
 2. **Classify** — Categorize into Tool / Business / News / Productivity types
-3. **Evaluate** — Score across 5 metrics, composite score ranges 5-16
+3. **Evaluate** — Score across 5 weighted metrics, composite score ranges 21-100
 4. **Recommend** — Generate keep / archive / uninstall report
 5. **Cleanup** — Execute after user confirmation (archive saves config first)
 
@@ -108,9 +108,9 @@ Example JSON output:
 
 | Composite Score | Recommendation | Description |
 |----------------|----------------|-------------|
-| 13-16 | Keep | High-value skill, master it deeply |
-| 9-12 | Archive | Uncertain value, save config then uninstall, re-activate when needed |
-| 5-8 | Uninstall | Low value, clean up directly |
+| 80-100 | Keep | High-value skill, master it deeply |
+| 50-79 | Archive | Uncertain value, save config then uninstall, re-activate when needed |
+| 21-49 | Uninstall | Low value, clean up directly |
 
 ### Special Rules (Override Scoring)
 
