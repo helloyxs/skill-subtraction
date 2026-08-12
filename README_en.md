@@ -17,7 +17,7 @@ Inspired by Swyx (Latent Space host / smol.ai founder) on AI skill management �
 ## Features
 
 - **Auto-scan**: One-click scan of all installed skills under `~/.workbuddy/skills/` and the current workspace's `.workbuddy/skills/`
-- **Categorized evaluation**: Classifies skills into Tool / Business / News / Productivity types, scoring across 5 metrics (usage frequency, necessity, current relevance, maintenance status, unique value)
+- **Categorized evaluation**: Classifies skills into Tool / Business / News / Productivity types, scoring across 6 metrics (usage frequency, necessity, current relevance, enabled status, maintenance status, unique value)
 - **Smart recommendations**: Auto-generates keep / archive / uninstall suggestions with special rules for deduplication, disabled-skill detection, and project-end detection
 - **Safe cleanup**: Archive operations save skill configurations first; uninstall only executes after user confirmation — never deletes without consent
 
@@ -63,9 +63,9 @@ In a WorkBuddy conversation, simply say:
 
 The skill auto-triggers and executes a 5-step workflow:
 
-1. **Scan** — Run `audit_skills.py` to collect metadata for all installed skills
-2. **Classify** — Categorize into Tool / Business / News / Productivity types
-3. **Evaluate** — Score across 5 weighted metrics, composite score ranges 21-100
+1. **Scan** — Run `audit_skills.py` to collect metadata for all installed skills (includes batch install detection and source stats)
+2. **Classify** — Categorize into Tool / Business / News / Productivity / Platform-preinstalled types; identify install source (user / platform / agent-created)
+3. **Evaluate** — Score across 6 weighted metrics, composite score ranges 24-100
 4. **Recommend** — Generate keep / archive / uninstall report
 5. **Cleanup** — Execute after user confirmation (archive saves config first)
 
@@ -74,6 +74,12 @@ The skill auto-triggers and executes a 5-step workflow:
 ```bash
 # Scan user-level skills
 python3 scripts/audit_skills.py
+
+# Specify a custom skills directory (e.g., Windows LobsterAI non-standard path)
+python3 scripts/audit_skills.py --skills-dir "C:\Users\admin\AppData\Roaming\LobsterAI\SKILLs"
+
+# Scan all installed agent platforms
+python3 scripts/audit_skills.py --all
 
 # Scan project-level skills with a specific workspace
 python3 scripts/audit_skills.py --workspace /path/to/workspace
@@ -110,13 +116,13 @@ Example JSON output:
 |----------------|----------------|-------------|
 | 80-100 | Keep | High-value skill, master it deeply |
 | 50-79 | Archive | Uncertain value, save config then uninstall, re-activate when needed |
-| 21-49 | Uninstall | Low value, clean up directly |
+| 24-49 | Uninstall | Low value, clean up directly |
 
 ### Special Rules (Override Scoring)
 
 1. **Zero usage + irrelevant → Uninstall directly**
 2. **Complete overlap → Keep the best one** (deduplication)
-3. **Disabled + unused for 90 days → Uninstall**
+3. **Disabled + never manually invoked → Uninstall**
 4. **Project-level + project ended → Uninstall**
 5. **Data source defunct → Uninstall**
 

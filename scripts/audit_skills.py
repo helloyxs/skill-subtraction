@@ -5,6 +5,7 @@
 自动检测当前脚本所在的 Agent 平台，只扫描该平台下的已安装技能。
 无需写死路径——装在 ~/.workbuddy/skills/ 下就扫 workbuddy，
 装在 ~/.codex/skills/ 下就扫 codex，以此类推。
+也支持非标准路径（如 Windows LobsterAI 的 AppData/Roaming/LobsterAI/SKILLs）。
 
 可靠性设计
 ----------
@@ -21,10 +22,11 @@
   - broken_symlink          符号链接指向不存在的位置
 
 用法：
-    python3 audit_skills.py                          # 自动检测当前 Agent
-    python3 audit_skills.py --agent codex            # 手动指定 Agent
-    python3 audit_skills.py --all                    # 扫描所有已安装的 Agent
-    python3 audit_skills.py --workspace /path/to/ws  # 同时扫描项目级技能
+    python3 audit_skills.py                                    # 自动检测当前 Agent
+    python3 audit_skills.py --agent codex                      # 手动指定 Agent
+    python3 audit_skills.py --all                              # 扫描所有已安装的 Agent
+    python3 audit_skills.py --skills-dir /custom/skills/path   # 指定自定义技能目录
+    python3 audit_skills.py --workspace /path/to/ws            # 同时扫描项目级技能
 """
 
 import json
@@ -33,10 +35,23 @@ import sys
 import re
 import time
 from pathlib import Path
+from collections import Counter
+
+
+# ── Windows 编码修复 ──────────────────────────────────────────
+if sys.platform == 'win32':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except (AttributeError, Exception):
+        # Python < 3.7 没有 reconfigure，用旧方式
+        import io
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 
 # ── 已知 Agent 平台（仅用于 --all 全量扫描） ──────────────────
-KNOWN_AGENTS = ['workbuddy', 'codex', 'claude', 'cursor', 'cline', 'continue']
+KNOWN_AGENTS = ['workbuddy', 'codex', 'claude', 'cursor', 'cline', 'continue', 'lobsterai']
 
 
 def add_issue(issues: list, path: str, issue_type: str, message: str, severity: str = 'warning'):
@@ -193,12 +208,26 @@ def detect_current_agent() -> tuple[str, Path] | None:
     """
     通过脚本自身路径反推当前 Agent。
 
-    脚本路径结构: ~/.<agent>/skills/<skill-name>/scripts/audit_skills.py
-    向上回溯 3 级到达 skills/ 目录，再上一级是 ~/.<agent>/，
-    目录名去掉前导点即为 agent 名称。
+    标准路径结构: ~/.<agent>/skills/<skill-name>/scripts/audit_skills.py
+    Windows 非标准: C:\\Users\\<user>\\AppData\\Roaming\\<Agent>\\SKILLs\\<skill-name>\\scripts\\audit_skills.py
+
+    两种情况下 parents[2] 都是 skills 目录，parents[3] 是 agent 目录。
     """
-    script_path = Path(__file__).resolve()
-    # scripts/audit_skills.py → scripts/ → skill-dir/ → skills/ → ~/.<agent>/
+    # __file__ 在某些 exec() 场景下未定义，用 sys.argv[0] 兜底
+    try:
+        script_path = Path(__file__).resolve()
+    except NameError:
+        if sys.argv and sys.argv[0]:
+            script_path = Path(sys.argv[0]).resolve()
+        else:
+            return None
+
+    # scripts/audit_skills.py → skill-dir/ → skills/ (or SKILLs/)
+    # parents[0] = scripts/, parents[1] = skill-dir/, parents[2] = skills dir
+    if len(script_path.parents) < 4:
+        return None
+
+    skills_dir = script_path.parents[2]
     agent_dir = script_path.parents[3]
     agent_name = agent_dir.name
 
@@ -206,7 +235,9 @@ def detect_current_agent() -> tuple[str, Path] | None:
     if agent_name.startswith('.'):
         agent_name = agent_name[1:]
 
-    skills_dir = agent_dir / 'skills'
+    # 统一小写：LobsterAI → lobsterai
+    agent_name = agent_name.lower()
+
     if skills_dir.exists():
         return agent_name, skills_dir
     return None
@@ -326,10 +357,23 @@ def scan_skills_dir(skills_dir: Path, agent: str, scope: str, issues: list) -> l
 def detect_all_agents() -> list[tuple[str, Path]]:
     """检测机器上所有已安装的 Agent 平台。"""
     found = []
+    # Unix/Mac: ~/.<agent>/skills/
     for name in KNOWN_AGENTS:
         skills_dir = Path.home() / f'.{name}' / 'skills'
         if skills_dir.exists():
             found.append((name, skills_dir))
+
+    # Windows: AppData/Roaming/<Agent>/SKILLs/ 或 AppData/Roaming/<Agent>/skills/
+    if sys.platform == 'win32':
+        appdata = os.environ.get('APPDATA')
+        if appdata:
+            for name in KNOWN_AGENTS:
+                for skills_subdir in ['SKILLs', 'skills']:
+                    skills_dir = Path(appdata) / name / skills_subdir
+                    # 避免重复
+                    if skills_dir.exists() and not any(str(sd) == str(skills_dir) for _, sd in found):
+                        found.append((name, skills_dir))
+
     return found
 
 
@@ -358,11 +402,40 @@ def print_issue_summary(issues: list, total_skills: int):
         print(f"    {issue_type}: {count}", file=sys.stderr)
 
 
+def detect_batch_installs(skills: list[dict]) -> list[dict]:
+    """
+    检测批量安装的技能组。
+    当多个技能共享相同创建日期（±1天内）且数量 ≥ 5 个时，标记为批量安装。
+    """
+    # 按日期分组（只取日期部分，不含时间）
+    date_groups: dict[str, list[str]] = {}
+    for s in skills:
+        mtime = s.get('last_modified', '')
+        if mtime == 'unknown' or not mtime:
+            continue
+        date_str = mtime[:10]  # YYYY-MM-DD
+        date_groups.setdefault(date_str, []).append(s['name'])
+
+    batches = []
+    for date_str, names in date_groups.items():
+        if len(names) >= 5:
+            batches.append({
+                'date': date_str,
+                'count': len(names),
+                'skills': sorted(names)
+            })
+
+    # 按数量降序
+    batches.sort(key=lambda x: -x['count'])
+    return batches
+
+
 def main():
     # ── 解析参数 ──
     agent_override = None
     workspace = None
     scan_all = False
+    skills_dir_override = None
 
     args = sys.argv[1:]
     i = 0
@@ -372,6 +445,9 @@ def main():
             i += 2
         elif args[i] == '--workspace' and i + 1 < len(args):
             workspace = args[i + 1]
+            i += 2
+        elif args[i] == '--skills-dir' and i + 1 < len(args):
+            skills_dir_override = args[i + 1]
             i += 2
         elif args[i] == '--all':
             scan_all = True
@@ -388,7 +464,24 @@ def main():
     agents_scanned: list[dict] = []
 
     # ── 确定扫描目标 ──
-    if scan_all:
+    if skills_dir_override:
+        # 自定义技能目录（如 LobsterAI 的非标准路径）
+        skills_dir = Path(skills_dir_override)
+        if not skills_dir.exists():
+            print(f"Error: skills directory not found: {skills_dir}", file=sys.stderr)
+            sys.exit(1)
+        # 尝试从路径推断 agent 名称
+        agent_name = skills_dir.parent.name.lower()
+        if agent_name.startswith('.'):
+            agent_name = agent_name[1:]
+        agent_skills = scan_skills_dir(skills_dir, agent_name, 'user', issues)
+        skills.extend(agent_skills)
+        agents_scanned.append({
+            'agent': agent_name,
+            'path': str(skills_dir),
+            'skill_count': len(agent_skills)
+        })
+    elif scan_all:
         for agent_name, skills_dir in detect_all_agents():
             agent_skills = scan_skills_dir(skills_dir, agent_name, 'user', issues)
             skills.extend(agent_skills)
@@ -398,9 +491,21 @@ def main():
                 'skill_count': len(agent_skills)
             })
     elif agent_override:
+        # 先尝试 Unix 路径，再尝试 Windows AppData
         skills_dir = Path.home() / f'.{agent_override}' / 'skills'
+        if not skills_dir.exists() and sys.platform == 'win32':
+            appdata = os.environ.get('APPDATA', '')
+            for subdir in ['SKILLs', 'skills']:
+                alt_dir = Path(appdata) / agent_override / subdir
+                if alt_dir.exists():
+                    skills_dir = alt_dir
+                    break
         if not skills_dir.exists():
-            print(f"Error: skills directory not found: {skills_dir}", file=sys.stderr)
+            print(f"Error: skills directory not found for agent '{agent_override}'", file=sys.stderr)
+            print(f"  Tried: {skills_dir}", file=sys.stderr)
+            if sys.platform == 'win32':
+                print(f"  Also tried: {Path(os.environ.get('APPDATA', '')) / agent_override / 'SKILLs'}", file=sys.stderr)
+            print(f"Use --skills-dir <path> to specify a custom path.", file=sys.stderr)
             sys.exit(1)
         agent_skills = scan_skills_dir(skills_dir, agent_override, 'user', issues)
         skills.extend(agent_skills)
@@ -413,7 +518,7 @@ def main():
         detected = detect_current_agent()
         if not detected:
             print("Error: cannot determine current agent from script path.", file=sys.stderr)
-            print("Use --agent <name> or --all to specify manually.", file=sys.stderr)
+            print("Use --agent <name>, --skills-dir <path>, or --all to specify manually.", file=sys.stderr)
             sys.exit(1)
 
         agent_name, skills_dir = detected
@@ -432,6 +537,17 @@ def main():
         project_skills = scan_skills_dir(project_dir, project_agent, 'project', issues)
         skills.extend(project_skills)
 
+    # ── 批量安装检测 ──
+    batch_installs = detect_batch_installs(skills)
+
+    # ── 安装来源统计 ──
+    source_stats = {
+        'agent_created': sum(1 for s in skills if s.get('agent_created')),
+        'not_agent_created': sum(1 for s in skills if not s.get('agent_created')),
+        'disabled': sum(1 for s in skills if s.get('disable_model_invocation')),
+        'batch_detected': sum(b['count'] for b in batch_installs),
+    }
+
     # ── 输出 JSON ──
     output = {
         'audit_time': time.strftime('%Y-%m-%d %H:%M:%S'),
@@ -439,6 +555,8 @@ def main():
         'agents_scanned': agents_scanned,
         'user_skills': sum(1 for s in skills if s['scope'] == 'user'),
         'project_skills': sum(1 for s in skills if s['scope'] == 'project'),
+        'source_stats': source_stats,
+        'batch_installs': batch_installs,
         'issue_summary': {
             'total': len(issues),
             'errors': sum(1 for i in issues if i['severity'] == 'error'),
@@ -459,6 +577,12 @@ def main():
 
     # stderr 打印摘要，让用户立刻看到是否有问题
     print_issue_summary(issues, len(skills))
+
+    # 批量安装提示
+    if batch_installs:
+        print(f"\n[INFO] 检测到 {len(batch_installs)} 批批量安装：", file=sys.stderr)
+        for b in batch_installs:
+            print(f"  - {b['date']}: {b['count']} 个技能（建议按业务方向整批评估）", file=sys.stderr)
 
     # 有错误时退出码非零，方便 CI 接入
     if any(i['severity'] == 'error' for i in issues):
