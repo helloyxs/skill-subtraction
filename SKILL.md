@@ -148,7 +148,7 @@ python3 scripts/audit_skills.py --workspace /path/to/workspace
 
 - **执行清理**：用户确认后按建议逐项操作
   - **卸载**：使用 SkillManage 删除技能
-  - **归档**：将技能的 SKILL.md 和关键配置文件内容保存到 `~/.workbuddy/skill-archive/<skill-name>.md`，然后卸载技能
+  - **归档**：将技能的 SKILL.md 和关键配置文件内容保存到当前 Agent 对应的归档目录 `~/.<agent>/skill-archive/<skill-name>.md`（如 WorkBuddy → `~/.workbuddy/skill-archive/`，Codex → `~/.codex/skill-archive/`，Claude → `~/.claude/skill-archive/`），然后卸载技能
   - **保留**：不做操作
 - **仅查看报告**：不做任何操作，用户自行决定后续行动
 

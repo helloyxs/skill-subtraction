@@ -155,7 +155,7 @@
 1. 读取技能的 SKILL.md 全文
 2. 如有 references/ 目录，读取关键参考文档
 3. 如有 scripts/ 目录，记录脚本文件名和用途
-4. 将以上内容整理为一个 Markdown 文件，保存到 `~/.workbuddy/skill-archive/<skill-name>.md`
+4. 将以上内容整理为一个 Markdown 文件，保存到当前 Agent 对应的归档目录 `~/.<agent>/skill-archive/<skill-name>.md`（通过脚本路径反推当前 Agent，如 WorkBuddy → `~/.workbuddy/skill-archive/`，Codex → `~/.codex/skill-archive/`，Claude → `~/.claude/skill-archive/`）
 5. 文件格式：
 
 ```markdown
