@@ -16,7 +16,8 @@
 
 ## 功能
 
-- **自动扫描**：一键扫描 `~/.workbuddy/skills/` 和当前工作区 `.workbuddy/skills/` 下的所有已安装技能
+- **自动扫描**：一键扫描当前 Agent 平台下的所有已安装技能。脚本通过自身路径自动检测所属平台——装在 `~/.workbuddy/skills/` 下就扫 WorkBuddy，装在 `~/.codex/skills/` 下就扫 Codex，以此类推；同时支持扫描当前工作区 `.workbuddy/skills/` 下的项目级技能
+- **多平台兼容**：不只支持 WorkBuddy，还兼容 Codex、Claude Code、Cursor、Cline、Continue、LobsterAI 等采用 `~/.<agent>/skills/` 目录约定的 AI 助手平台；`--all` 可一键扫描机器上所有已安装的平台
 - **分类评估**：按工具类 / 业务型 / 资讯类 / 生产力类四维度分类，六指标打分（使用频率、必要性、当前相关性、启用状态、维护状态、独特价值）
 - **智能建议**：自动生成保留 / 归档 / 卸载三类建议，含去重、禁用检测、项目结束检测等特殊规则
 - **安全清理**：归档操作会先保存技能配置，确认后才执行卸载，不擅自删除
@@ -44,17 +45,23 @@ skill-subtraction/
 # 克隆仓库
 git clone https://github.com/<your-username>/skill-subtraction.git
 
-# 复制到 WorkBuddy 技能目录
+# 复制到你使用的 AI 助手平台技能目录
+# WorkBuddy
 cp -r skill-subtraction ~/.workbuddy/skills/
+# Codex
+cp -r skill-subtraction ~/.codex/skills/
+# Claude Code
+cp -r skill-subtraction ~/.claude/skills/
+# Cursor / Cline / Continue 等同理
 ```
 
 ### 方式二：直接下载
 
-下载 ZIP 解压后，将 `skill-subtraction` 文件夹放到 `~/.workbuddy/skills/` 下即可。
+下载 ZIP 解压后，将 `skill-subtraction` 文件夹放到你所用平台的技能目录下即可（如 `~/.workbuddy/skills/`、`~/.codex/skills/` 等）。
 
 ## 使用方法
 
-在 WorkBuddy 对话中直接说：
+在你使用的 AI 助手平台对话中直接说：
 
 - "帮我检查一下装了哪些技能"
 - "做一次技能减法"
@@ -140,7 +147,7 @@ python3 scripts/audit_skills.py --workspace /path/to/workspace
 ## 技术要求
 
 - Python 3.10+
-- WorkBuddy（或兼容的 AI 助手平台）
+- WorkBuddy、Codex、Claude Code、Cursor、Cline、Continue、LobsterAI 等兼容的 AI 助手平台（采用 `~/.<agent>/skills/` 目录约定即可）
 
 ## License
 

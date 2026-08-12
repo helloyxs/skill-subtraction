@@ -16,7 +16,8 @@ Inspired by Swyx (Latent Space host / smol.ai founder) on AI skill management �
 
 ## Features
 
-- **Auto-scan**: One-click scan of all installed skills under `~/.workbuddy/skills/` and the current workspace's `.workbuddy/skills/`
+- **Auto-scan**: One-click scan of all installed skills under the current Agent platform. The script auto-detects its host platform via its own path — placed under `~/.workbuddy/skills/` it scans WorkBuddy, under `~/.codex/skills/` it scans Codex, and so on; also scans the current workspace's `.workbuddy/skills/` for project-level skills
+- **Multi-platform**: Not just WorkBuddy — compatible with Codex, Claude Code, Cursor, Cline, Continue, LobsterAI, and any AI assistant platform that follows the `~/.<agent>/skills/` directory convention; use `--all` to scan all installed platforms at once
 - **Categorized evaluation**: Classifies skills into Tool / Business / News / Productivity types, scoring across 6 metrics (usage frequency, necessity, current relevance, enabled status, maintenance status, unique value)
 - **Smart recommendations**: Auto-generates keep / archive / uninstall suggestions with special rules for deduplication, disabled-skill detection, and project-end detection
 - **Safe cleanup**: Archive operations save skill configurations first; uninstall only executes after user confirmation — never deletes without consent
@@ -44,17 +45,23 @@ skill-subtraction/
 # Clone the repository
 git clone https://github.com/<your-username>/skill-subtraction.git
 
-# Copy to WorkBuddy skills directory
+# Copy to your AI assistant platform's skills directory
+# WorkBuddy
 cp -r skill-subtraction ~/.workbuddy/skills/
+# Codex
+cp -r skill-subtraction ~/.codex/skills/
+# Claude Code
+cp -r skill-subtraction ~/.claude/skills/
+# Cursor / Cline / Continue etc. — same pattern
 ```
 
 ### Option 2: Direct Download
 
-Download the ZIP, extract it, and place the `skill-subtraction` folder under `~/.workbuddy/skills/`.
+Download the ZIP, extract it, and place the `skill-subtraction` folder under your platform's skills directory (e.g., `~/.workbuddy/skills/`, `~/.codex/skills/`, etc.).
 
 ## Usage
 
-In a WorkBuddy conversation, simply say:
+In your AI assistant platform's conversation, simply say:
 
 - "Check what skills I have installed"
 - "Do a skill subtraction"
@@ -140,7 +147,7 @@ See [`references/evaluation_framework.md`](references/evaluation_framework.md) f
 ## Requirements
 
 - Python 3.10+
-- WorkBuddy (or a compatible AI assistant platform)
+- WorkBuddy, Codex, Claude Code, Cursor, Cline, Continue, LobsterAI, or any compatible AI assistant platform (anything following the `~/.<agent>/skills/` directory convention)
 
 ## License
 

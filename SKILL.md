@@ -208,7 +208,7 @@ python3 scripts/audit_skills.py --workspace /path/to/workspace
 
 ### scripts/
 
-- `audit_skills.py` — 扫描 `~/.workbuddy/skills/` 和当前工作区 `.workbuddy/skills/` 下的所有技能，解析 frontmatter，输出结构化 JSON 报告
+- `audit_skills.py` — 自动检测当前脚本所在的 Agent 平台，扫描该平台下的所有已安装技能（如 `~/.workbuddy/skills/`、`~/.codex/skills/`、`~/.claude/skills/` 等）及当前工作区项目级技能，解析 frontmatter，输出结构化 JSON 报告
 
 ### references/
 
