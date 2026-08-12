@@ -1,7 +1,7 @@
 ---
 name: skill-subtraction
-version: 1.1.0
-description: "技能减法 — 已安装技能审计与减法清理。当用户要求检查已安装技能、清理技能、做技能减法、评估技能保留与否、审计 skill、整理技能列表时触发此 Skill。典型场景：'帮我检查一下装了哪些技能'、'哪些技能该删'、'做一次技能减法'、'审计我的技能'、'skill audit'、'技能减法'。此 Skill 扫描所有已安装技能，按工具类/业务型分类评估，生成保留与卸载建议报告。"
+version: 1.2.0
+description: "技能减法 — 已安装技能审计与减法清理。当用户要求检查已安装技能、清理技能、做技能减法、评估技能保留与否、审计 skill、整理技能列表时触发此 Skill。典型场景：'帮我检查一下装了哪些技能'、'哪些技能该删'、'做一次技能减法'、'审计我的技能'、'skill audit'、'技能减法'。此 Skill 扫描所有已安装技能，按工具类/业务型分类评估，生成保留与卸载建议报告。支持中文和英文报告输出（根据用户语言或 --lang 参数自动选择）。"
 agent_created: true
 ---
 
@@ -24,23 +24,35 @@ agent_created: true
 2. 干扰判断：过时技能像噪音，干扰面对新问题时的判断
 3. 维护成本高：技能需要更新调试，过多意味着无谓的精力消耗
 
-## 何时使用
+## 何时使用 / When to Use
 
-- 用户要求检查/审计已安装的技能
-- 用户想做技能清理/减法
-- 用户想知道哪些技能该留、哪些该删
-- 用户感觉技能太多、记不住、不知道该用哪个
-- 定期（如每季度）技能盘点
+- 用户要求检查/审计已安装的技能 / User asks to check/audit installed skills
+- 用户想做技能清理/减法 / User wants to clean up / do skill subtraction
+- 用户想知道哪些技能该留、哪些该删 / User wants to know which skills to keep or delete
+- 用户感觉技能太多、记不住、不知道该用哪个 / User feels they have too many skills
+- 定期（如每季度）技能盘点 / Regular (e.g., quarterly) skill inventory
+
+## 语言自动检测
+
+本 Skill 支持中文和英文两种报告语言，**根据用户当前对话语言自动判断，不主动询问**：
+
+- 用户用中文交流 → 输出中文报告，脚本传 `--lang zh`
+- 用户用英文交流 → 输出英文报告，脚本传 `--lang en`
+- **无法判断语言时** → 询问用户："中文报告还是英文报告？"
+
+确定语言后，所有后续步骤（脚本执行、评估、报告输出）均使用该语言。
 
 ## 工作流程
 
 ### 第一步：扫描已安装技能
 
-运行审计脚本，自动检测当前脚本所在的 Agent 平台，只扫描该平台下的已安装技能：
+运行审计脚本，自动检测当前脚本所在的 Agent 平台，只扫描该平台下的已安装技能。**根据检测到的对话语言自动传 `--lang zh` 或 `--lang en`**，无需用户指定：
 
 ```bash
 # 自动检测当前 Agent，扫描同级技能（推荐）
-python3 scripts/audit_skills.py
+# 中文对话时：python3 scripts/audit_skills.py --lang zh
+# 英文对话时：python3 scripts/audit_skills.py --lang en
+python3 scripts/audit_skills.py --lang zh
 
 # 手动指定 Agent
 python3 scripts/audit_skills.py --agent codex
@@ -99,56 +111,60 @@ python3 scripts/audit_skills.py --workspace /path/to/workspace
 
 读取 `references/evaluation_framework.md` 获取完整评估框架。对每个技能进行三维度分类：
 
-**维度一：技能类型**
+**维度一：技能类型 / Skill Type**
 
-| 类型 | 定义 | 典型特征 |
+| 类型 Type | 定义 Definition | 典型特征 Typical Features |
 |------|------|---------|
-| 工具类 | 通用型操作工具，跨项目复用 | 浏览器操作、文档处理、PDF 处理、邮件发送、文件格式转换 |
-| 业务型 | 与特定项目、业务方向绑定的技能 | 竞品分析、客服回复、行业报告生成 |
-| 资讯类 | 信息获取与聚合类技能 | AI 新闻、趋势追踪、RSS 聚合 |
-| 生产力类 | 日常工作流程增强技能 | 周报生成、会议纪要、任务管理 |
-| 平台预装 | Agent 平台出厂自带，用户未主动选择 | `agent_created=false` + 批量安装特征（同日创建多个） |
+| 工具类 Tool | 通用型操作工具，跨项目复用 General-purpose tools, cross-project | 浏览器操作、文档处理、PDF 处理、邮件发送、文件格式转换 Browser automation, document processing, PDF, email, file conversion |
+| 业务型 Business | 与特定项目、业务方向绑定的技能 Tied to specific project/business domain | 竞品分析、客服回复、行业报告生成 Competitor analysis, customer service, industry reports |
+| 资讯类 News | 信息获取与聚合类技能 Information gathering and aggregation | AI 新闻、趋势追踪、RSS 聚合 AI news, trend tracking, RSS |
+| 生产力类 Productivity | 日常工作流程增强技能 Daily workflow enhancement | 周报生成、会议纪要、任务管理 Weekly reports, meeting notes, task management |
+| 平台预装 Platform-preinstalled | Agent 平台出厂自带，用户未主动选择 Pre-installed by platform, not user-chosen | `agent_created=false` + 批量安装特征 Batch install pattern |
 
-**维度二：安装来源**（影响评估策略，不单独打分）
+**维度二：安装来源（影响评估策略，不单独打分）/ Install Source (affects evaluation strategy, not scored separately)**
 
-| 来源 | 识别方法 | 评估策略 |
+| 来源 Source | 识别方法 Detection | 评估策略 Strategy |
 |------|---------|---------|
-| 用户主动安装 | `agent_created=false`，非批量安装 | 正常六指标评分 |
-| 平台预装 | `agent_created=false`，批量安装（同日 ≥ 5 个） | 优先按业务方向整批筛选，不匹配的整批归档而非逐个评估 |
-| Agent 创建 | `agent_created=true` | 重点关注创建目的是否仍然有效 |
+| 用户主动安装 User-installed | `agent_created=false`，非批量安装 | 正常六指标评分 Full 6-metric scoring |
+| 平台预装 Platform-preinstalled | `agent_created=false`，批量安装（同日 ≥ 5 个）Batch install (≥5 same day) | 优先按业务方向整批筛选，不匹配的整批归档 Filter by business direction, batch archive non-matching |
+| Agent 创建 Agent-created | `agent_created=true` | 重点关注创建目的是否仍然有效 Focus on whether original purpose still valid |
 
-**维度三：评估指标（百分制）**
+**维度三：评估指标（百分制）/ Evaluation Metrics (100-point scale)**
 
 对每个技能逐一评估以下指标，加权求和得出总分（24-100 分）：
+Evaluate each skill across the following weighted metrics (composite score: 24-100):
 
-1. **使用频率（25 分）**：高（每天/每周）/ 中（每月）/ 低（几个月一次）/ 零（装了就没用过）
-2. **必要性（20 分）**：不可替代 / 有替代方案 / 可有可无
-3. **当前相关性（20 分）**：与当前业务方向匹配 / 部分匹配 / 已不相关
-4. **启用状态（15 分）**：已启用（自动触发）/ 已禁用但偶尔手动调用 / 已禁用且从未手动调用
-5. **维护状态（10 分）**：近期有更新 / 偶尔更新 / 长期未更新 / 已废弃
-6. **独特价值（10 分）**：提供独有能力 / 与其他技能重叠 / 可被通用能力替代
+1. **使用频率 Usage Frequency（25 分）**：高（每天/每周）/ 中（每月）/ 低（几个月一次）/ 零（装了就没用过）High (daily/weekly) / Medium (monthly) / Low (few months) / Zero (never used)
+2. **必要性 Necessity（20 分）**：不可替代 / 有替代方案 / 可有可无 Irreplaceable / Has alternatives / Nice-to-have
+3. **当前相关性 Current Relevance（20 分）**：与当前业务方向匹配 / 部分匹配 / 已不相关 Matches current direction / Partial match / Irrelevant
+4. **启用状态 Enabled Status（15 分）**：已启用（自动触发）/ 已禁用但偶尔手动调用 / 已禁用且从未手动调用 Enabled (auto-trigger) / Disabled but manually invoked / Disabled & never invoked
+5. **维护状态 Maintenance（10 分）**：近期有更新 / 偶尔更新 / 长期未更新 / 已废弃 Active / Occasional / Stale / Deprecated
+6. **独特价值 Unique Value（10 分）**：提供独有能力 / 与其他技能重叠 / 可被通用能力替代 Unique capability / Overlaps / Replaceable by general capabilities
 
 ### 第三步：生成建议
 
 根据评估结果，将每个技能归入以下三类之一：
+Based on evaluation results, categorize each skill into one of three actions:
 
-| 建议 | 判定条件 | 操作 |
+| 建议 Recommendation | 判定条件 Criteria | 操作 Action |
 |------|---------|------|
-| **保留** | 综合评分 80-100 分；工具类且高频使用；或业务型且当前业务方向匹配且近期有使用记录 | 深度掌握，定期更新 |
-| **归档** | 综合评分 50-79 分；暂时不用但未来可能需要；或业务型且业务方向正在转型 | 保存提示词和配置文档，卸载技能 |
-| **卸载** | 综合评分 24-49 分；零使用且无独有价值；或与其他技能高度重叠；或已不相关且长期未更新 | 直接卸载 |
+| **保留 Keep** | 综合评分 80-100 分；工具类且高频使用；或业务型且当前业务方向匹配且近期有使用记录 Score 80-100; Tool type & high frequency; or Business type matching current direction with recent usage | 深度掌握，定期更新 Master deeply, update regularly |
+| **归档 Archive** | 综合评分 50-79 分；暂时不用但未来可能需要；或业务型且业务方向正在转型 Score 50-79; temporarily unused but may need later; or Business type during direction transition | 保存提示词和配置文档，卸载技能 Save prompt & config docs, uninstall skill |
+| **卸载 Uninstall** | 综合评分 24-49 分；零使用且无独有价值；或与其他技能高度重叠；或已不相关且长期未更新 Score 24-49; zero usage & no unique value; or high overlap; or irrelevant & stale | 直接卸载 Uninstall directly |
 
-特殊规则：
-- 同功能技能只保留最优的一个（去重）
-- 已禁用且从未手动调用的技能，优先建议卸载（禁用后从未使用说明完全不需要）
-- 资讯类技能如果与用户当前关注方向不匹配，建议卸载（信息获取类容易过时）
-- 项目级技能如果对应项目已结束，建议卸载
-- **平台预装 + 批量安装 + 与当前业务不匹配 → 整批归档**（不逐个评分，直接按业务方向筛选）
-- **平台预装 + 用户从未主动触发 → 归档（非卸载）**（预装技能可能被平台依赖）
+特殊规则 / Special Rules (Override Scoring):
+- 同功能技能只保留最优的一个（去重）/ Keep only the best among functionally identical skills (dedup)
+- 已禁用且从未手动调用的技能，优先建议卸载 / Disabled & never manually invoked → prioritize uninstall
+- 资讯类技能如果与用户当前关注方向不匹配，建议卸载 / News-type skills not matching current focus → uninstall
+- 项目级技能如果对应项目已结束，建议卸载 / Project-level skills for ended projects → uninstall
+- **平台预装 + 批量安装 + 与当前业务不匹配 → 整批归档** / Platform-preinstalled + batch + no match → batch archive（不逐个评分，直接按业务方向筛选 / Don't score individually, filter by business direction）
+- **平台预装 + 用户从未主动触发 → 归档（非卸载）** / Platform-preinstalled + never triggered → archive (not uninstall)（预装技能可能被平台依赖 / Pre-installed skills may be platform-dependent）
 
 ### 第四步：输出审计报告
 
-按以下格式输出审计报告：
+根据「语言自动检测」章节确定的语言，选择对应格式输出报告。
+
+**使用中文时，按以下格式输出：**
 
 ```markdown
 # 技能减法审计报告
@@ -181,28 +197,63 @@ python3 scripts/audit_skills.py --workspace /path/to/workspace
 - 下次审计建议时间：...
 ```
 
-### 第五步：执行清理（需用户确认）
+**使用英文时，按以下格式输出：**
+
+```markdown
+# Skill Subtraction Audit Report
+
+**Audit Date**: YYYY-MM-DD
+**Total Skills**: N (User-level: X, Project-level: Y)
+
+## Keep (N)
+
+| Skill | Type | Reason to Keep | Usage Frequency |
+|-------|------|---------------|-----------------|
+| ... | ... | ... | ... |
+
+## Archive (N)
+
+| Skill | Type | Reason to Archive | Reactivation Condition |
+|-------|------|--------------------|-----------------------|
+| ... | ... | ... | ... |
+
+## Uninstall (N)
+
+| Skill | Type | Reason to Uninstall | Risk Assessment |
+|-------|------|---------------------|-----------------|
+| ... | ... | ... | ... |
+
+## Summary
+
+- Current skill set health: High/Medium/Low
+- Main issues: ...
+- Recommended next audit: ...
+```
+
+### 第五步：执行清理（需用户确认）/ Step 5: Execute Cleanup (User Confirmation Required)
 
 输出报告后，询问用户是否要执行清理操作。**不擅自卸载任何技能**。
+After outputting the report, ask the user whether to execute cleanup. **Never uninstall skills without consent.**
 
-用户可选择：
+用户可选择 / User options:
 
-- **执行清理**：用户确认后按建议逐项操作
-  - **卸载**：使用 SkillManage 删除技能
-  - **归档**：将技能的 SKILL.md 和关键配置文件内容保存到当前 Agent 对应的归档目录 `~/.<agent>/skill-archive/<skill-name>.md`（如 WorkBuddy → `~/.workbuddy/skill-archive/`，Codex → `~/.codex/skill-archive/`，Claude → `~/.claude/skill-archive/`），然后卸载技能
-  - **保留**：不做操作
-- **仅查看报告**：不做任何操作，用户自行决定后续行动
+- **执行清理 Execute Cleanup**：用户确认后按建议逐项操作 / Execute recommended actions after user confirmation
+  - **卸载 Uninstall**：使用 SkillManage 删除技能 / Use SkillManage to delete the skill
+  - **归档 Archive**：将技能的 SKILL.md 和关键配置文件内容保存到当前 Agent 对应的归档目录 `~/.<agent>/skill-archive/<skill-name>.md`（如 WorkBuddy → `~/.workbuddy/skill-archive/`，Codex → `~/.codex/skill-archive/`，Claude → `~/.claude/skill-archive/`），然后卸载技能 / Save SKILL.md and key config files to the agent's archive directory, then uninstall
+  - **保留 Keep**：不做操作 / No action
+- **仅查看报告 Report Only**：不做任何操作，用户自行决定后续行动 / No action, user decides later
 
 每一步操作前都向用户展示将要执行的动作，获得明确确认后才执行。
+Show the user each action before executing, and only proceed after explicit confirmation.
 
-## 审计周期建议
+## 审计周期建议 / Audit Cycle Recommendations
 
-| 频率 | 适用场景 |
+| 频率 Frequency | 适用场景 Scenario |
 |------|---------|
-| 每季度 | 技能数量超过 10 个时 |
-| 每个项目结束时 | 清理项目级技能 |
-| 业务方向调整时 | 评估业务型技能的相关性 |
-| 感觉"技能太多"时 | 随时触发 |
+| 每季度 Quarterly | 技能数量超过 10 个时 When skill count exceeds 10 |
+| 每个项目结束时 After each project ends | 清理项目级技能 Clean up project-level skills |
+| 业务方向调整时 When business direction shifts | 评估业务型技能的相关性 Re-evaluate business-type skills |
+| 感觉"技能太多"时 When feeling "too many skills" | 随时触发 Anytime |
 
 ## 捆绑资源
 
@@ -212,4 +263,4 @@ python3 scripts/audit_skills.py --workspace /path/to/workspace
 
 ### references/
 
-- `evaluation_framework.md` — 完整的技能评估框架，包含分类定义、评估指标、判定矩阵和去重规则
+- `evaluation_framework.md` — 完整的技能评估框架，包含中英双语版本：分类定义、评估指标、判定矩阵和去重规则。英文报告输出时阅读 English 部分。

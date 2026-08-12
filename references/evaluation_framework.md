@@ -221,3 +221,229 @@
 ```
 
 6. 确认归档文件写入成功后，再执行卸载操作
+
+---
+
+# Skill Subtraction · Evaluation Framework
+
+## I. Skill Classification System
+
+### 1. Tool Type
+
+**Definition**: General-purpose operational tools, reusable across projects, solving "how to do" problems.
+
+**Characteristics**:
+- Operation-oriented rather than business-oriented
+- Functionality doesn't become outdated with business direction changes
+- Usually infrastructure in workflows
+
+**Examples**:
+- Browser automation (web page operation, screenshots, form filling)
+- Document processing (Word/Excel/PDF read-write, format conversion)
+- File operations (batch rename, compress/decompress)
+- Email sending
+- Code execution assistance
+
+**Keep Criteria**: High frequency (daily or weekly) + irreplaceable (without it, efficiency drops significantly)
+
+### 2. Business Type
+
+**Definition**: Skills tied to specific projects, business directions, or industries, solving "what to do" problems.
+
+**Characteristics**:
+- Contains business knowledge, policy rules, industry terminology
+- Related to specific projects or business cycles
+- May become invalid when business direction changes
+
+**Examples**:
+- E-commerce customer service replies (with refund policies, reply templates)
+- Competitor analysis reports (with analysis frameworks)
+- Financial data analysis (with industry metrics)
+- Legal document generation (with legal clause references)
+
+**Keep Criteria**: Currently in use for active projects or business + will continue to be used in the foreseeable future
+
+### 3. News Type
+
+**Definition**: Information gathering, aggregation, and push-type skills.
+
+**Characteristics**:
+- Depends on external data sources (API, RSS, web pages)
+- Strong timeliness of content
+- Data sources may fail or migrate
+
+**Examples**:
+- AI news aggregation
+- GitHub trend tracking
+- Social media monitoring
+- Industry report feeds
+
+**Keep Criteria**: Stable information source + matches current focus + cannot be replaced by simpler means
+
+### 4. Productivity Type
+
+**Definition**: Daily workflow enhancement skills, boosting personal efficiency.
+
+**Characteristics**:
+- Cross-project but oriented toward personal work habits
+- Based on fixed templates or processes
+- Relies on personal input rather than external data
+
+**Examples**:
+- Weekly report generation
+- Meeting notes organization
+- Task management
+- Knowledge base organization
+
+**Keep Criteria**: Used at least once a week + process is genuinely more efficient than manual operation
+
+### 5. Platform-preinstalled
+
+**Definition**: Skills that come pre-installed with the Agent platform, not actively chosen by the user.
+
+**Characteristics**:
+- `agent_created` is false and not manually installed by user
+- Multiple skills share the same creation/modification date (batch install pattern)
+- Uniform description style (e.g., all "Use when..." template phrases)
+- Covers multiple business functions (HR/finance/legal/sales/product, etc.)
+
+**Identification Method**:
+- Script output `agent_created` field is false
+- `last_modified` dates are highly concentrated (e.g., 60+ created same day)
+- Skill names and description styles are highly similar
+
+**Keep Criteria**: Directly matches user's current work direction + user has active usage records
+
+## II. Evaluation Metrics (100-point scale)
+
+Six metrics weighted and summed for a total score of 100. Weights reflect their impact on skill retention decisions.
+
+### Metric 1: Usage Frequency (25 pts)
+
+> Highest weight — whether it's used is the primary criterion for keep/remove.
+
+| Level | Definition | Score |
+|-------|-----------|-------|
+| High | Daily or weekly use | 25 |
+| Medium | Monthly use | 16 |
+| Low | Once every few months | 8 |
+| Zero | Never used after install, or forgotten | 4 |
+
+### Metric 2: Necessity (20 pts)
+
+> Whether you can do without it directly determines irreplaceability.
+
+| Level | Definition | Score |
+|-------|-----------|-------|
+| Irreplaceable | Without it, the corresponding workflow breaks | 20 |
+| Has alternatives | Other skills or general capabilities can cover, but this one is better | 12 |
+| Nice-to-have | General capabilities suffice, skill is just icing on the cake | 4 |
+
+### Metric 3: Current Relevance (20 pts)
+
+> No matter how good a skill is, if it doesn't match current direction, it should be cleaned up.
+
+| Level | Definition | Score |
+|-------|-----------|-------|
+| Match | Directly related to current core business/work direction | 20 |
+| Partial match | Indirectly related, occasionally useful | 12 |
+| Irrelevant | Business direction has changed, or belongs to ended project | 4 |
+
+### Metric 4: Enabled Status (15 pts)
+
+> Disabled skills don't appear in agent context, don't affect thinking, but also don't provide automatic value.
+
+| Level | Definition | Score |
+|-------|-----------|-------|
+| Enabled | Auto-trigger available, agent actively considers calling | 15 |
+| Disabled but recently manually invoked | Intentionally kept for noise reduction, occasionally called via `/skill-name` | 9 |
+| Disabled & never manually invoked | Completely idle, purely wasting disk space | 3 |
+
+### Metric 5: Maintenance Status (10 pts)
+
+> Long-unupdated skills may have already failed.
+
+| Level | Definition | Score |
+|-------|-----------|-------|
+| Active | Modified or updated within last 30 days | 10 |
+| Normal | Modified within 30-90 days | 6 |
+| Stagnant | Not modified for 90+ days | 3 |
+
+### Metric 6: Unique Value (10 pts)
+
+> Only keep the best among functionally overlapping skills.
+
+| Level | Definition | Score |
+|-------|-----------|-------|
+| Unique | Provides functionality no other skill or general capability has | 10 |
+| Partially unique | Overlaps with other skills but has differentiated capabilities | 6 |
+| Complete overlap | Highly redundant with other skills | 3 |
+
+## III. Decision Matrix
+
+Composite Score = Usage Frequency + Necessity + Current Relevance + Enabled Status + Maintenance Status + Unique Value
+
+Score range: 24 - 100
+
+| Composite Score | Recommendation | Description |
+|----------------|----------------|-------------|
+| 80-100 | Keep | High-value skill, master deeply |
+| 50-79 | Archive | Uncertain value, save config then uninstall, re-activate when needed |
+| 24-49 | Uninstall | Low value, clean up directly |
+
+### Special Rules (Override Scoring)
+
+The following rules take priority over the scoring matrix:
+
+1. **Zero usage + irrelevant → Uninstall directly**: Regardless of other metrics
+2. **Complete overlap → Keep the best one**: Deduplicate functionally identical skills
+3. **Disabled & never manually invoked → Uninstall directly**: If never manually called after disabling, it's completely unnecessary
+4. **Project-level + project ended → Uninstall**: Clean up after project ends
+5. **Data source defunct → Uninstall**: News-type skills with non-functional data sources
+6. **Platform-preinstalled + batch install + no match with current business → Batch archive**: Don't evaluate individually; filter by business direction and batch archive non-matching ones. Typical scenario: platform pre-installed HR/finance/legal/sales templates, but user only does engineering
+7. **Platform-preinstalled + never triggered by user → Archive (not uninstall)**: Pre-installed skills may be platform-dependent; archiving is safer than uninstalling. If platform functions abnormally after archiving, can quickly restore
+8. **Batch install detection**: When multiple skills share the same creation date (±1 day) and count ≥ 5, flagged as "batch install"; recommend evaluating as a group rather than scoring individually
+
+## IV. Deduplication Rules
+
+When functionally overlapping skills are found, keep in the following priority order:
+
+1. More complete functionality
+2. More recently updated
+3. Higher usage frequency
+4. Agent-created (can self-modify and iterate)
+5. Lighter directory (fewer file_count, smaller dir_size)
+
+Skills eliminated by deduplication are marked as "Uninstall" with reason "Overlaps with XX, keeping the better option".
+
+## V. Archive Operation Standard
+
+Archiving is not simply uninstalling — it saves the skill's core knowledge for quick future recovery:
+
+1. Read the skill's full SKILL.md
+2. If references/ directory exists, read key reference docs
+3. If scripts/ directory exists, record script file names and purposes
+4. Organize the above into a Markdown file, save to the current Agent's archive directory `~/.<agent>/skill-archive/<skill-name>.md` (inferred from script path: WorkBuddy → `~/.workbuddy/skill-archive/`, Codex → `~/.codex/skill-archive/`, Claude → `~/.claude/skill-archive/`)
+5. File format:
+
+```markdown
+# Archived Skill: <skill-name>
+
+**Archive Date**: YYYY-MM-DD
+**Archive Reason**: ...
+**Reactivation Condition**: ...
+
+## SKILL.md Original Content
+
+<Full SKILL.md content>
+
+## Reference Document Summary
+
+<Key references file content summary>
+
+## Script Inventory
+
+<scripts/ directory file names and purposes>
+```
+
+6. Confirm the archive file was written successfully, then execute uninstall

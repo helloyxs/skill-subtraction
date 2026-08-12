@@ -17,6 +17,7 @@ Inspired by Swyx (Latent Space host / smol.ai founder) on AI skill management �
 ## Features
 
 - **Auto-scan**: One-click scan of all installed skills under the current Agent platform. The script auto-detects its host platform via its own path — placed under `~/.workbuddy/skills/` it scans WorkBuddy, under `~/.codex/skills/` it scans Codex, and so on; also scans the current workspace's `.workbuddy/skills/` for project-level skills
+- **Bilingual output**: Supports both Chinese and English reports via `--lang zh` (default) or `--lang en` flag; stderr messages, issue descriptions, and audit report templates are fully localized
 - **Multi-platform**: Not just WorkBuddy — compatible with Codex, Claude Code, Cursor, Cline, Continue, LobsterAI, and any AI assistant platform that follows the `~/.<agent>/skills/` directory convention; use `--all` to scan all installed platforms at once
 - **Categorized evaluation**: Classifies skills into Tool / Business / News / Productivity types, scoring across 6 metrics (usage frequency, necessity, current relevance, enabled status, maintenance status, unique value)
 - **Smart recommendations**: Auto-generates keep / archive / uninstall suggestions with special rules for deduplication, disabled-skill detection, and project-end detection
@@ -70,17 +71,20 @@ In your AI assistant platform's conversation, simply say:
 
 The skill auto-triggers and executes a 5-step workflow:
 
-1. **Scan** — Run `audit_skills.py` to collect metadata for all installed skills (includes batch install detection and source stats)
+1. **Scan** — Run `audit_skills.py` to collect metadata for all installed skills (includes batch install detection and source stats). Supports `--lang en` for English output.
 2. **Classify** — Categorize into Tool / Business / News / Productivity / Platform-preinstalled types; identify install source (user / platform / agent-created)
 3. **Evaluate** — Score across 6 weighted metrics, composite score ranges 24-100
-4. **Recommend** — Generate keep / archive / uninstall report
+4. **Recommend** — Generate keep / archive / uninstall report (Chinese or English, based on `--lang` or user language)
 5. **Cleanup** — Execute after user confirmation (archive saves config first)
 
 ### Run the Scan Script Directly
 
 ```bash
-# Scan user-level skills
+# Scan user-level skills (Chinese output, default)
 python3 scripts/audit_skills.py
+
+# English output
+python3 scripts/audit_skills.py --lang en
 
 # Specify a custom skills directory (e.g., Windows LobsterAI non-standard path)
 python3 scripts/audit_skills.py --skills-dir "C:\Users\admin\AppData\Roaming\LobsterAI\SKILLs"

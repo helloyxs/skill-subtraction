@@ -17,6 +17,7 @@
 ## 功能
 
 - **自动扫描**：一键扫描当前 Agent 平台下的所有已安装技能。脚本通过自身路径自动检测所属平台——装在 `~/.workbuddy/skills/` 下就扫 WorkBuddy，装在 `~/.codex/skills/` 下就扫 Codex，以此类推；同时支持扫描当前工作区 `.workbuddy/skills/` 下的项目级技能
+- **双语输出**：支持中文和英文报告输出，通过 `--lang zh`（默认）或 `--lang en` 控制；stderr 消息、问题描述、审计报告模板均完整双语化
 - **多平台兼容**：不只支持 WorkBuddy，还兼容 Codex、Claude Code、Cursor、Cline、Continue、LobsterAI 等采用 `~/.<agent>/skills/` 目录约定的 AI 助手平台；`--all` 可一键扫描机器上所有已安装的平台
 - **分类评估**：按工具类 / 业务型 / 资讯类 / 生产力类四维度分类，六指标打分（使用频率、必要性、当前相关性、启用状态、维护状态、独特价值）
 - **智能建议**：自动生成保留 / 归档 / 卸载三类建议，含去重、禁用检测、项目结束检测等特殊规则
@@ -79,8 +80,11 @@ cp -r skill-subtraction ~/.claude/skills/
 ### 直接运行扫描脚本
 
 ```bash
-# 扫描用户级技能
+# 扫描用户级技能（默认中文输出）
 python3 scripts/audit_skills.py
+
+# 指定输出语言为英文
+python3 scripts/audit_skills.py --lang en
 
 # 指定自定义技能目录（如 Windows LobsterAI 的非标准路径）
 python3 scripts/audit_skills.py --skills-dir "C:\Users\admin\AppData\Roaming\LobsterAI\SKILLs"
