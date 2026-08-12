@@ -52,6 +52,26 @@ python3 scripts/audit_skills.py --all
 python3 scripts/audit_skills.py --workspace /path/to/workspace
 ```
 
+**可靠性保证**：
+
+脚本在所有可能失败的环节都主动记录 issue，最终输出到 JSON 的 `issues` 字段，并通过 stderr 打印摘要。
+
+支持的 issue 类型：
+
+| 类型 | 严重度 | 说明 |
+|------|--------|------|
+| `missing_skill_md` | error | 技能目录缺少 SKILL.md |
+| `unreadable_skill_md` | error | SKILL.md 编码异常（非 UTF-8） |
+| `permission_denied` | error | 目录/文件权限不足 |
+| `no_frontmatter` | warning | SKILL.md 没有 YAML frontmatter |
+| `malformed_frontmatter` | warning | frontmatter 内容解析异常 |
+| `no_name_field` | warning | frontmatter 缺少 name 字段 |
+| `empty_description` | warning | frontmatter description 为空 |
+| `not_a_directory` | warning | 技能目录下出现普通文件 |
+| `broken_symlink` | error | 符号链接指向不存在的位置 |
+
+**退出码**：0 表示完全正常，2 表示扫描完成但有 error 级问题（方便 CI 接入）。
+
 脚本输出 JSON 数组，每个元素包含：
 - `name`：技能名称
 - `agent`：所属 Agent 平台（自动检测，如 workbuddy / codex / claude）
