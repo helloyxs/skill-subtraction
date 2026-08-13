@@ -44,7 +44,7 @@ skill-subtraction/
 
 ```bash
 # 克隆仓库
-git clone https://github.com/<your-username>/skill-subtraction.git
+git clone https://github.com/helloyxs/skill-subtraction.git
 
 # 复制到你使用的 AI 助手平台技能目录
 # WorkBuddy

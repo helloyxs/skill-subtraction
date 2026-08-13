@@ -44,7 +44,7 @@ skill-subtraction/
 
 ```bash
 # Clone the repository
-git clone https://github.com/<your-username>/skill-subtraction.git
+git clone https://github.com/helloyxs/skill-subtraction.git
 
 # Copy to your AI assistant platform's skills directory
 # WorkBuddy
