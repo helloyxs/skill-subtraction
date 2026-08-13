@@ -30,7 +30,7 @@ See real generated samples: [English report](examples/audit_report_en.md) · [�
 - **Auto-scan** — detects the hosting agent platform from its own path (`~/.workbuddy/skills/` → WorkBuddy, `~/.codex/skills/` → Codex, …), scans all installed skills, plus project-level skills in the workspace
 - **Bilingual output** — Chinese or English reports via `--lang zh` / `--lang en`; stderr, issue descriptions, and report templates fully localized
 - **Multi-platform** — WorkBuddy, Codex, Claude Code, Cursor, Cline, Continue, LobsterAI, and anything following the `~/.<agent>/skills/` convention; `--all` scans every installed platform
-- **Score-based evaluation** — classifies skills (tool / business / news / productivity) and scores each on 6 weighted metrics (usage frequency, necessity, current relevance, enabled status, maintenance, unique value)
+- **Score-based evaluation** — classifies skills into 6 industry functional domains (dev & engineering, data & connectors, content & media, domain business, productivity, meta & agent control) plus subcategories, and scores each on 6 weighted metrics (usage frequency, necessity, current relevance, enabled status, maintenance, unique value)
 - **Smart recommendations** — keep / archive / uninstall with special rules: dedup, disabled-skill detection, project-end detection, batch-install detection
 - **Safe cleanup** — archives save skill configs first; uninstall only executes after explicit user confirmation
 
@@ -60,7 +60,7 @@ Just say (English or 中文):
 The skill auto-triggers and runs a 5-step workflow:
 
 1. **Scan** — `python3 scripts/audit_skills.py --lang <zh|en>` collects metadata for all installed skills (batch-install detection, install-source stats)
-2. **Classify** — tool / business / news / productivity / platform-preinstalled; identify install source (user / platform / agent-created)
+2. **Classify** — 6 functional domains (dev & engineering / data & connectors / content & media / domain business / productivity / meta & agent control) plus subcategories; identify install source (user / platform / agent-created)
 3. **Evaluate** — 6 weighted metrics, composite score 24–100
 4. **Recommend** — keep / archive / uninstall report (language follows the conversation)
 5. **Cleanup** — only after user confirmation (archive saves config first)

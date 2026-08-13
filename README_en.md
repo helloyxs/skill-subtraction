@@ -72,7 +72,7 @@ In your AI assistant platform's conversation, simply say:
 The skill auto-triggers and executes a 5-step workflow:
 
 1. **Scan** — Run `audit_skills.py` to collect metadata for all installed skills (includes batch install detection and source stats). Supports `--lang en` for English output.
-2. **Classify** — Categorize into Tool / Business / News / Productivity / Platform-preinstalled types; identify install source (user / platform / agent-created)
+2. **Classify** — Categorize into 6 functional domains (Dev & Engineering / Data & Connectors / Content & Media / Domain Business / Productivity & Workflow / Meta & Agent Control) plus subcategories; identify install source (user / platform / agent-created)
 3. **Evaluate** — Score across 6 weighted metrics, composite score ranges 24-100
 4. **Recommend** — Generate keep / archive / uninstall report (Chinese or English, based on `--lang` or user language)
 5. **Cleanup** — Execute after user confirmation (archive saves config first)

@@ -1,6 +1,6 @@
 ---
 name: skill-subtraction
-description: "Audit installed AI skills and recommend keep / archive / uninstall to keep your skill set lean and focused. Triggers when the user asks for a skill audit, to check or list installed skills, do a skill subtraction or cleanup, decide which skills to keep or delete, declutter or slim down their skill list, or find redundant or duplicate skills. Scans all installed skills across agent platforms, classifies them (tool / business / news / productivity), scores each on 6 weighted metrics, and generates a structured keep / archive / uninstall report with dedup and batch-install detection. Supports bilingual output (English / Chinese). 技能减法：审计已安装技能，生成保留/归档/卸载建议报告。当用户要求检查已安装技能、清理技能、做技能减法、审计 skill、评估技能去留、整理技能列表时触发。"
+description: "Audit installed AI skills and recommend keep / archive / uninstall to keep your skill set lean and focused. Triggers when the user asks for a skill audit, to check or list installed skills, do a skill subtraction or cleanup, decide which skills to keep or delete, declutter or slim down their skill list, or find redundant or duplicate skills. Scans all installed skills across agent platforms, classifies them into 6 industry functional domains (dev & engineering, data & connectors, content & media, domain business, productivity, meta & agent control) plus subcategories, scores each on 6 weighted metrics, and generates a structured keep / archive / uninstall report with dedup and batch-install detection. Supports bilingual output (English / Chinese). 技能减法：审计已安装技能，生成保留/归档/卸载建议报告。当用户要求检查已安装技能、清理技能、做技能减法、审计 skill、评估技能去留、整理技能列表时触发。"
 ---
 
 # Skill Subtraction (技能减法)
@@ -57,8 +57,8 @@ Output is a JSON array; each entry includes `name`, `agent`, `scope`, `path`, `d
 
 Apply the classification and scoring from the [Evaluation framework](#evaluation-framework-评估框架) section (full detail in `references/evaluation_framework.md` — read it for complex scenarios):
 
-- **Type**: tool / business / news / productivity / platform-preinstalled
-- **Install source** (affects strategy, not score): user-installed / platform-preinstalled / agent-created
+- **6 Functional Domains & Subcategories**: Dev & System / Data & Connectors / Content & Media / Domain & Business / Productivity & Workflow / Meta & Agent Control
+- **Install Source** (decoupled dimension): user-installed / platform-preinstalled / agent-created
 - **6 weighted metrics** (composite 24–100): usage frequency 25, necessity 20, current relevance 20, enabled status 15, maintenance 10, unique value 10
 
 ### Step 3: Recommend
@@ -77,21 +77,21 @@ Using the language determined in the auto-detection section, output the matching
 
 ## 保留（N 个）
 
-| 技能 | 类型 | 保留理由 | 使用频率 |
-|------|------|---------|---------|
-| ... | ... | ... | ... |
+| 技能 | 类型 | 细分领域 | 保留理由 | 使用频率 |
+|------|------|---------|---------|---------|
+| ... | ... | ... | ... | ... |
 
 ## 归档（N 个）
 
-| 技能 | 类型 | 归档理由 | 重新激活条件 |
-|------|------|---------|------------|
-| ... | ... | ... | ... |
+| 技能 | 类型 | 细分领域 | 归档理由 | 重新激活条件 |
+|------|------|---------|---------|------------|
+| ... | ... | ... | ... | ... |
 
 ## 卸载（N 个）
 
-| 技能 | 类型 | 卸载理由 | 风险评估 |
-|------|------|---------|---------|
-| ... | ... | ... | ... |
+| 技能 | 类型 | 细分领域 | 卸载理由 | 风险评估 |
+|------|------|---------|---------|---------|
+| ... | ... | ... | ... | ... |
 
 ## 汇总建议
 
@@ -108,21 +108,21 @@ Using the language determined in the auto-detection section, output the matching
 
 ## Keep (N)
 
-| Skill | Type | Reason to Keep | Usage Frequency |
-|-------|------|---------------|-----------------|
-| ... | ... | ... | ... |
+| Skill | Type | Subcategory | Reason to Keep | Usage Frequency |
+|-------|------|-------------|---------------|-----------------|
+| ... | ... | ... | ... | ... |
 
 ## Archive (N)
 
-| Skill | Type | Reason to Archive | Reactivation Condition |
-|-------|------|--------------------|-----------------------|
-| ... | ... | ... | ... |
+| Skill | Type | Subcategory | Reason to Archive | Reactivation Condition |
+|-------|------|-------------|--------------------|-----------------------|
+| ... | ... | ... | ... | ... |
 
 ## Uninstall (N)
 
-| Skill | Type | Reason to Uninstall | Risk Assessment |
-|-------|------|---------------------|-----------------|
-| ... | ... | ... | ... |
+| Skill | Type | Subcategory | Reason to Uninstall | Risk Assessment |
+|-------|------|-------------|---------------------|-----------------|
+| ... | ... | ... | ... | ... |
 
 ## Summary
 

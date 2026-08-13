@@ -7,24 +7,24 @@
 
 ## Keep (3)
 
-| Skill | Type | Reason to Keep | Usage Frequency |
-|-------|------|----------------|-----------------|
-| aihot | News | Unique anonymous API access to AI news (aihot.virxact.com); enabled and auto-triggers; recently updated to v1.2.1; provides irreplaceable real-time data retrieval | Medium (weekly) |
-| competitor-analysis | Business | Standardized competitor analysis framework with references and assets; recently created (Aug 7); structured output ensures consistent quality | Low (monthly) |
-| github-ai-trends | News | Unique capability — fetches GitHub trending AI/ML/LLM repos by daily/weekly/monthly period; no overlap with other skills; v1.1.0 | Low (monthly) |
+| Skill | Type | Subcategory | Reason to Keep | Usage Frequency |
+|-------|------|-------------|----------------|-----------------|
+| aihot | Data & Connectors | Search & RAG | Unique anonymous API access to AI news (aihot.virxact.com); enabled and auto-triggers; recently updated to v1.2.1; provides irreplaceable real-time data retrieval | Medium (weekly) |
+| competitor-analysis | Domain & Business | Marketing & Competitors | Standardized competitor analysis framework with references and assets; recently created (Aug 7); structured output ensures consistent quality | Low (monthly) |
+| github-ai-trends | Data & Connectors | SaaS & API Connectors | Unique capability — fetches GitHub trending AI/ML/LLM repos by daily/weekly/monthly period; no overlap with other skills; v1.1.0 | Low (monthly) |
 
 ## Archive (2)
 
-| Skill | Type | Reason to Archive | Reactivation Condition |
-|-------|------|---------------------|-----------------------|
-| follow-builders | News | Overlaps with aihot (both deliver AI industry news); 286 files / 2.2MB is heavy; low actual usage despite being enabled; content is supplementary to aihot | Reactivate if aihot is uninstalled or if specifically monitoring AI builders on X/YouTube |
-| weekly-report | Productivity | Disabled and never manually invoked; weekly reports can be generated without a dedicated skill using general AI capabilities; low unique value | Reactivate if a structured, repeatable weekly report workflow is needed |
+| Skill | Type | Subcategory | Reason to Archive | Reactivation Condition |
+|-------|------|-------------|---------------------|-----------------------|
+| follow-builders | Data & Connectors | SaaS & API Connectors | Overlaps with aihot (both deliver AI industry news); 286 files / 2.2MB is heavy; low actual usage despite being enabled; content is supplementary to aihot | Reactivate if aihot is uninstalled or if specifically monitoring AI builders on X/YouTube |
+| weekly-report | Productivity & Workflow | Weekly Report & Meeting Notes | Disabled and never manually invoked; weekly reports can be generated without a dedicated skill using general AI capabilities; low unique value | Reactivate if a structured, repeatable weekly report workflow is needed |
 
 ## Uninstall (1)
 
-| Skill | Type | Reason to Uninstall | Risk Assessment |
-|-------|------|----------------------|-----------------|
-| ecom-customer-service | Business | Disabled (`disable_model_invocation: true`) and never manually triggered; no current e-commerce project; agent-created for a past use case that is no longer active; occupies 22.9KB + scripts with zero usage | Low risk — no active dependency; skill can be recreated from archive if e-commerce work resumes |
+| Skill | Type | Subcategory | Reason to Uninstall | Risk Assessment |
+|-------|------|-------------|----------------------|-----------------|
+| ecom-customer-service | Domain & Business | Support & Operations | Disabled (`disable_model_invocation: true`) and never manually triggered; no current e-commerce project; agent-created for a past use case that is no longer active; occupies 22.9KB + scripts with zero usage | Low risk — no active dependency; skill can be recreated from archive if e-commerce work resumes |
 
 ---
 

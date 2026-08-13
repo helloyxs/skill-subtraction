@@ -2,91 +2,102 @@
 
 ## 一、技能分类体系
 
-### 1. 工具类
+针对 AI Agent Skill 的业界生态与实用场景，将技能按照**6 大功能领域（Functional Taxonomy）**进行归类，并标注具体的**细分领域（Subcategory）**。
 
-**定义**：通用型操作工具，跨项目复用，解决"怎么做"的问题。
+技能的功能分类与**安装来源（用户安装 / 平台预装 / Agent 创建）**及**作用域（用户级 / 项目级）**完全解耦，作为独立维度进行评估。
 
-**特征**：
-- 面向操作而非面向业务
-- 功能不随业务方向变化而过时
-- 通常是工作流中的基础设施
+### 1. 开发与工程类 (Dev & System / Engineering)
 
-**示例**：
-- 浏览器自动化（操作网页、截图、填表）
-- 文档处理（Word/Excel/PDF 读写、格式转换）
-- 文件操作（批量重命名、压缩解压）
-- 邮件发送
-- 代码执行辅助
+**定义**：面向软件开发、系统运维、终端命令行与代码工程的技能。
 
-**保留标准**：高频使用（每天或每周）+ 不可替代（没有它效率大幅降低）
+**细分领域 (Subcategories)**：
+- **代码生成与重构**：代码编写、模式重构、Code Review、架构设计
+- **终端 Shell 与 DevOps**：命令行脚本、CI/CD 自动化、容器部署、环境配置
+- **测试与调试**：单元测试撰写、Bug 排查、日志诊断、API 测试
+- **Git 与版本控制**：Commit/PR 自动化、分支管理、冲突解决
 
-### 2. 业务型
+**示例**：`git-workflow`, `code-refactor`, `ci-cd-helper`, `api-tester`
 
-**定义**：与特定项目、业务方向或行业绑定的技能，解决"做什么"的问题。
+**保留标准**：高频使用（每天或每周）+ 对工程研发有显著提效
 
-**特征**：
-- 包含业务知识、政策规则、行业术语
-- 与特定项目或业务周期相关
-- 业务方向变化时可能失效
+### 2. 数据与集成类 (Data & Connectors)
 
-**示例**：
-- 电商客服回复（含退款政策、回复模板）
-- 竞品分析报告（含分析框架）
-- 金融数据分析（含行业指标）
-- 法律文书生成（含法条引用）
+**定义**：连接外部系统、数据库、API 接口及知识检索的技能。
 
-**保留标准**：当前正在使用的项目或业务 + 在可预见未来会持续使用
+**细分领域 (Subcategories)**：
+- **数据库/SQL 查询**：SQL 编写、数据库 Schema 分析、数据查询与导出
+- **知识检索与 RAG**：学术文献检索、内部文档库搜索、向量检索
+- **SaaS 与 API 连接器**：GitHub/Jira/Notion/Slack/Linear 接口集成与数据同步
 
-### 3. 资讯类
+**示例**：`postgres-query`, `github-issue-tracker`, `notion-sync`, `arxiv-search`
 
-**定义**：信息获取、聚合和推送类技能。
+**保留标准**：关联系统使用频繁 + 接口维护良好 + 无法被标准 Web 搜索简单替代
 
-**特征**：
-- 依赖外部数据源（API、RSS、网页）
-- 内容时效性强
-- 数据源可能失效或迁移
+### 3. 内容与多媒体创作类 (Content, Design & Media)
 
-**示例**：
-- AI 新闻聚合
-- GitHub 趋势追踪
-- 社交媒体监控
-- 行业报告推送
+**定义**：多媒体内容生成、视觉设计及富文本/格式转换类技能。
 
-**保留标准**：信息源稳定 + 与当前关注方向匹配 + 无法被更简单的手段替代
+**细分领域 (Subcategories)**：
+- **图像与视觉生成**：AI 绘图 (Midjourney/Flux/SD)、UI 原型、图表制作
+- **HTML/PPT 演示文稿生成**：网页版 Presentation、幻灯片制作与转换
+- **文档与格式转换**：PDF OCR 解析、Word/Excel 读写、格式清洗与重排
 
-### 4. 生产力类
+**示例**：`generate-html-ppt`, `image-gen`, `pdf-ocr`, `excel-analyzer`
 
-**定义**：日常工作流程增强技能，提升个人效率。
+**保留标准**：输出质量高 + 符合工作流格式要求 + 近期有实际创作需求
 
-**特征**：
-- 跨项目但面向个人工作习惯
-- 基于固定模板或流程
-- 依赖个人输入而非外部数据
+### 4. 专业业务与领域类 (Domain & Business)
 
-**示例**：
-- 周报生成
-- 会议纪要整理
-- 任务管理
-- 知识库整理
+**定义**：与特定行业、企业部门或具体业务流程绑定的技能。
 
-**保留标准**：每周至少使用一次 + 流程确实比手动操作更高效
+**细分领域 (Subcategories)**：
+- **财务与法务**：合同审查、税务合规、财务报表分析
+- **营销与竞品**：竞品分析报告、SEO 优化、社媒文案撰写
+- **客服与运营**：电商客服回复、工单处理模板、运营活动策划
+- **HR 与行政政策**：员工手册查询、招聘 JD 生成、报销流程指引
 
-### 5. 平台预装
+**示例**：`legal-contract-review`, `competitor-analysis`, `ecom-customer-service`
 
-**定义**：Agent 平台出厂自带的技能，用户未主动选择安装。
+**保留标准**：当前正在绑定的业务项目 + 在可预见的业务周期内持续生效
 
-**特征**：
-- `agent_created` 为 false 且非用户手动安装
-- 多个技能共享相同的创建/修改日期（批量安装特征）
-- 描述风格统一（如都是 "Use when..." 模板句式）
-- 涵盖多种业务职能（HR/财务/法务/销售/产品等）
+### 5. 通用生产力与工作流类 (Productivity & Workflow)
 
-**识别方法**：
-- 脚本输出的 `agent_created` 字段为 false
-- `last_modified` 日期高度集中（如同一天创建 60+ 个）
-- 技能名称和描述风格高度相似
+**定义**：日常办公增强、个人效率提升及流程自动化技能。
 
-**保留标准**：与用户当前工作方向直接匹配 + 用户有过主动使用记录
+**细分领域 (Subcategories)**：
+- **周报与会议纪要**：周报月报生成、会议录音/文本整理、Action Item 提取
+- **任务与日程管理**：TodoList 整理、日程规划、提醒事项生成
+- **邮件与消息撰写**：商务邮件起草、通知群发模板、回复拟定
+
+**示例**：`weekly-report`, `meeting-summary`, `email-drafter`
+
+**保留标准**：每周至少使用一次 + 流程比手动操作具备明显效率优势
+
+### 6. 元技能与系统控制类 (Meta & Agent Control)
+
+**定义**：作用于 Agent 本身或技能体系治理的系统级/元级技能。
+
+**细分领域 (Subcategories)**：
+- **技能审计与管理**：已安装技能扫描、价值评估与清理（如本技能 `skill-subtraction`）
+- **Prompt 评估与调优**：Prompt 优化、Evaluator 评测、System Prompt 构建
+- **Memory 记忆管理**：长期记忆检索、用户偏好更新、上下文摘要
+- **Agent 行为规范**：Custom Instructions、规约/Rule 控制
+
+**示例**：`skill-subtraction`, `agy-customizations`, `prompt-evaluator`
+
+**保留标准**：具备高度不可替代的 Agent 治理与自我提升价值
+
+---
+
+### 独立评估维度（与功能分类解耦）
+
+1. **安装来源 (Source Type)**：
+   - **用户手动安装 (`user-installed`)**：用户主动引入，需优先重点打分评估。
+   - **平台预装 (`platform-preinstalled`)**：Agent 平台批量出厂自带，适合整批按业务方向筛选或归档。
+   - **Agent 自主创建 (`agent-created`)**：Agent 在对话中临时生成，易过期，可安全卸载或重新生成。
+2. **作用域 (Scope)**：
+   - **全局用户级 (`user`)**：存放在 `~/.<agent>/skills/`，全局复用。
+   - **项目绑定级 (`project`)**：存放在工作区 `.workbuddy/skills/`，项目结束后直接清理。
 
 ## 二、评估指标（百分制）
 
@@ -228,91 +239,102 @@
 
 ## I. Skill Classification System
 
-### 1. Tool Type
+Skills are categorized into **6 functional domains (Functional Taxonomy)** aligned with modern AI Agent ecosystems, along with specific **subcategories (Subcategory)**.
 
-**Definition**: General-purpose operational tools, reusable across projects, solving "how to do" problems.
+Functional classification is completely decoupled from **installation source (user-installed / platform-preinstalled / agent-created)** and **scope (user-level / project-level)**, which are evaluated as independent dimensions.
 
-**Characteristics**:
-- Operation-oriented rather than business-oriented
-- Functionality doesn't become outdated with business direction changes
-- Usually infrastructure in workflows
+### 1. Dev & System / Engineering
 
-**Examples**:
-- Browser automation (web page operation, screenshots, form filling)
-- Document processing (Word/Excel/PDF read-write, format conversion)
-- File operations (batch rename, compress/decompress)
-- Email sending
-- Code execution assistance
+**Definition**: Skills designed for software development, system operations, terminal commands, and code engineering.
 
-**Keep Criteria**: High frequency (daily or weekly) + irreplaceable (without it, efficiency drops significantly)
+**Subcategories**:
+- **Code Generation & Refactoring**: Code writing, refactoring patterns, code review, architecture design
+- **Terminal Shell & DevOps**: Shell scripts, CI/CD automation, container deployment, environment setup
+- **Testing & Debugging**: Unit test writing, bug troubleshooting, log diagnostics, API testing
+- **Git & Version Control**: Commit/PR automation, branch management, conflict resolution
 
-### 2. Business Type
+**Examples**: `git-workflow`, `code-refactor`, `ci-cd-helper`, `api-tester`
 
-**Definition**: Skills tied to specific projects, business directions, or industries, solving "what to do" problems.
+**Keep Criteria**: High usage frequency (daily or weekly) + significant efficiency boost for engineering R&D
 
-**Characteristics**:
-- Contains business knowledge, policy rules, industry terminology
-- Related to specific projects or business cycles
-- May become invalid when business direction changes
+### 2. Data & Connectors
 
-**Examples**:
-- E-commerce customer service replies (with refund policies, reply templates)
-- Competitor analysis reports (with analysis frameworks)
-- Financial data analysis (with industry metrics)
-- Legal document generation (with legal clause references)
+**Definition**: Skills connecting external systems, databases, APIs, and knowledge retrieval.
 
-**Keep Criteria**: Currently in use for active projects or business + will continue to be used in the foreseeable future
+**Subcategories**:
+- **Database / SQL**: SQL writing, DB schema analysis, data query and export
+- **Search & RAG**: Academic literature search, internal docs search, vector retrieval
+- **SaaS & API Connectors**: GitHub/Jira/Notion/Slack/Linear API integration and data syncing
 
-### 3. News Type
+**Examples**: `postgres-query`, `github-issue-tracker`, `notion-sync`, `arxiv-search`
 
-**Definition**: Information gathering, aggregation, and push-type skills.
+**Keep Criteria**: Associated system frequently used + stable API maintenance + cannot be easily replaced by simple WebSearch
 
-**Characteristics**:
-- Depends on external data sources (API, RSS, web pages)
-- Strong timeliness of content
-- Data sources may fail or migrate
+### 3. Content, Design & Media
 
-**Examples**:
-- AI news aggregation
-- GitHub trend tracking
-- Social media monitoring
-- Industry report feeds
+**Definition**: Skills for multimedia content generation, visual design, and rich text/format conversion.
 
-**Keep Criteria**: Stable information source + matches current focus + cannot be replaced by simpler means
+**Subcategories**:
+- **Image & Visual Generation**: AI drawing (Midjourney/Flux/SD), UI mockups, chart generation
+- **HTML/PPT Presentation**: Web-based presentations, slide creation and conversion
+- **Document & Format Conversion**: PDF OCR parsing, Word/Excel read-write, formatting cleanup
 
-### 4. Productivity Type
+**Examples**: `generate-html-ppt`, `image-gen`, `pdf-ocr`, `excel-analyzer`
 
-**Definition**: Daily workflow enhancement skills, boosting personal efficiency.
+**Keep Criteria**: High output quality + matches workflow format requirements + active creation demand
 
-**Characteristics**:
-- Cross-project but oriented toward personal work habits
-- Based on fixed templates or processes
-- Relies on personal input rather than external data
+### 4. Domain & Business
 
-**Examples**:
-- Weekly report generation
-- Meeting notes organization
-- Task management
-- Knowledge base organization
+**Definition**: Skills bound to specific industries, corporate departments, or business workflows.
 
-**Keep Criteria**: Used at least once a week + process is genuinely more efficient than manual operation
+**Subcategories**:
+- **Finance & Legal**: Contract review, tax compliance, financial statement analysis
+- **Marketing & Competitors**: Competitor analysis reports, SEO optimization, social media drafting
+- **Support & Operations**: E-commerce customer service replies, ticket processing templates, campaign planning
+- **HR & Admin Policy**: Employee handbook lookup, job description generation, reimbursement policy guidance
 
-### 5. Platform-preinstalled
+**Examples**: `legal-contract-review`, `competitor-analysis`, `ecom-customer-service`
 
-**Definition**: Skills that come pre-installed with the Agent platform, not actively chosen by the user.
+**Keep Criteria**: Currently tied to active business projects + continues to be effective in foreseeable business cycles
 
-**Characteristics**:
-- `agent_created` is false and not manually installed by user
-- Multiple skills share the same creation/modification date (batch install pattern)
-- Uniform description style (e.g., all "Use when..." template phrases)
-- Covers multiple business functions (HR/finance/legal/sales/product, etc.)
+### 5. Productivity & Workflow
 
-**Identification Method**:
-- Script output `agent_created` field is false
-- `last_modified` dates are highly concentrated (e.g., 60+ created same day)
-- Skill names and description styles are highly similar
+**Definition**: Skills for daily office enhancement, personal efficiency, and process automation.
 
-**Keep Criteria**: Directly matches user's current work direction + user has active usage records
+**Subcategories**:
+- **Weekly Report & Meeting Notes**: Weekly/monthly report generation, meeting transcription cleanup, action item extraction
+- **Task & Schedule Management**: Todo list organization, schedule planning, reminder generation
+- **Email & Messaging**: Business email drafting, notification broadcast templates, reply drafting
+
+**Examples**: `weekly-report`, `meeting-summary`, `email-drafter`
+
+**Keep Criteria**: Used at least once a week + process provides clear efficiency advantage over manual operation
+
+### 6. Meta & Agent Control
+
+**Definition**: System-level or meta-skills operating on the Agent itself or governance of the skill set.
+
+**Subcategories**:
+- **Skill Audit & Management**: Scanning installed skills, value evaluation, and cleanup (e.g. `skill-subtraction`)
+- **Prompt Engineering & Eval**: Prompt optimization, evaluator benchmarks, system prompt construction
+- **Memory Management**: Long-term memory retrieval, user preference updates, context summarization
+- **Agent Guidelines & Rules**: Custom instructions, behavioral guidelines, rule enforcement
+
+**Examples**: `skill-subtraction`, `agy-customizations`, `prompt-evaluator`
+
+**Keep Criteria**: High irreplaceable value for Agent governance and self-improvement
+
+---
+
+### Independent Evaluation Dimensions
+
+1. **Source Type**:
+   - **User-installed (`user-installed`)**: Actively installed by user; highest evaluation priority.
+   - **Platform-preinstalled (`platform-preinstalled`)**: Pre-packaged by agent platform; suitable for batch filtering or archiving by business direction.
+   - **Agent-created (`agent-created`)**: Dynamically generated by agent during conversation; safe to uninstall or recreate.
+2. **Scope**:
+   - **User-level (`user`)**: Located in `~/.<agent>/skills/`, globally reusable.
+   - **Project-level (`project`)**: Located in workspace `.workbuddy/skills/`, cleaned up after project completion.
 
 ## II. Evaluation Metrics (100-point scale)
 
