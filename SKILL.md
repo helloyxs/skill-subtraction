@@ -282,12 +282,12 @@ Show the user each action before executing, and only proceed after explicit conf
 
 ### references/
 
-- `evaluation_framework.md` — 评估框架完整双语版，保留在仓库中供查阅；ClawHub 发布包不含此文件，核心内容已内嵌于文末「评估框架 / Evaluation Framework」章节。Full bilingual framework, kept in the repo; the ClawHub package does not include it — core content is embedded in the Evaluation Framework section below.
+- `evaluation_framework.md` — 评估框架完整双语版（分类体系、六指标细则、判定矩阵、特殊规则、去重规则、归档操作规范）。SKILL.md 内嵌核心评分表用于日常评估；遇到复杂场景（批量去重、归档恢复、平台预装整批筛选）时 Read 此文件获取完整细则。Full bilingual framework (classification, 6-metric detail, decision matrix, special rules, dedup, archive standard). SKILL.md embeds core scoring tables for daily use; Read this file for complex scenarios.
 
 ## 评估框架 / Evaluation Framework
 
-> 核心评估框架内嵌于此，供技能运行时直接参考（ClawHub 发布包不含 `references/` 目录）。完整双语版见仓库 `references/evaluation_framework.md`。
-> Core framework embedded for runtime use (the ClawHub package does not include `references/`). Full bilingual version: `references/evaluation_framework.md` in the repo.
+> 下方为核心评分表与决策矩阵，日常评估直接参考。完整细则（技能分类体系、去重优先级、归档操作规范与模板）见 `references/evaluation_framework.md`，遇到复杂场景时 Read 该文件。
+> Core scoring tables and decision matrix below for daily use. Full details (classification, dedup priority, archive standard & template) in `references/evaluation_framework.md` — Read it for complex scenarios.
 
 ### 六指标评分细则 / Six-Metric Scoring Detail
 
@@ -321,34 +321,7 @@ Show the user each action before executing, and only proceed after explicit conf
 7. **平台预装 + 用户从未主动触发 → 归档（非卸载）**（可能被平台依赖）/ Platform-preinstalled + never triggered → archive (not uninstall, may be platform-dependent)
 8. **批量安装检测**：同一天创建 ≥ 5 个技能（±1 天）→ 标记批量安装，整组评估 / Batch detection: ≥ 5 skills created the same day (±1 day) → flag and evaluate as a group
 
-### 去重规则 / Deduplication Rules
+### 去重与归档细则 / Dedup & Archive Details
 
-按以下优先级保留 / Keep by priority: 功能更完整 More complete functionality → 更近期更新 More recently updated → 使用频率更高 Higher usage frequency → agent_created → 目录更轻量 Lighter directory (file_count / dir_size)。
-
-被去重淘汰的技能标记为「卸载」，理由注明"与 XX 功能重叠，保留更优方案"。Eliminated skills are marked "Uninstall" with reason "Overlaps with XX, keeping the better option".
-
-### 归档操作规范 / Archive Operation Standard
-
-1. 读取技能 SKILL.md 全文 / Read the skill's full SKILL.md
-2. 如有 references/ 目录，读取关键参考文档 / If references/ exists, read key reference docs
-3. 如有 scripts/ 目录，记录脚本文件名和用途 / If scripts/ exists, record script names and purposes
-4. 整理为 Markdown，保存到当前 Agent 对应归档目录 `~/.<agent>/skill-archive/<skill-name>.md`（agent 由脚本路径反推：WorkBuddy → `~/.workbuddy/skill-archive/`，Codex → `~/.codex/skill-archive/`，Claude → `~/.claude/skill-archive/`）/ Save to the archive dir `~/.<agent>/skill-archive/<skill-name>.md`, agent inferred from script path
-5. 确认归档文件写入成功后，再执行卸载 / Only uninstall after archive write is confirmed
-
-归档文件模板 / Archive template:
-
-```markdown
-# 归档技能 / Archived Skill: <skill-name>
-**归档时间 Archive Date**: YYYY-MM-DD
-**归档原因 Archive Reason**: ...
-**重新激活条件 Reactivation Condition**: ...
-
-## SKILL.md 原文 / Original Content
-<完整 SKILL.md 内容 / Full SKILL.md content>
-
-## 参考文档摘要 / Reference Summary
-<关键 references 文件内容摘要 / Key references file content summary>
-
-## 脚本清单 / Script Inventory
-<scripts/ 目录下文件名及用途 / File names and purposes under scripts/>
-```
+- **去重 Dedup**：功能重叠的技能只保留最优的一个，被淘汰的标记为「卸载」，理由注明"与 XX 功能重叠"。保留优先级（功能完整→近期更新→高频→agent_created→轻量）见 `references/evaluation_framework.md` 第四章。
+- **归档 Archive**：归档目录 `~/.<agent>/skill-archive/<skill-name>.md`（第五步已说明），完整归档步骤与文件模板见 `references/evaluation_framework.md` 第五章。
