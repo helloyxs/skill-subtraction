@@ -1,0 +1,17 @@
+name: skill-subtraction
+display_name: Skill Subtraction
+short_description: Audit installed AI skills and recommend keep / archive / uninstall to keep your skill set lean.
+default_prompt: |
+  When the user asks to audit installed skills, check which skills they have installed,
+  clean up or subtract skills, decide which skills to keep or delete, declutter their
+  skill list, or find redundant or duplicate skills, use the skill-subtraction skill:
+
+  1. Scan: run `python3 scripts/audit_skills.py --lang <zh|en>` (match the conversation
+     language) to collect metadata for all installed skills.
+  2. Classify & score: apply the six-metric scoring in SKILL.md (usage frequency 25,
+     necessity 20, current relevance 20, enabled status 15, maintenance 10, unique
+     value 10); read references/evaluation_framework.md for complex scenarios.
+  3. Recommend: map scores to keep / archive / uninstall using the decision matrix
+     and special rules.
+  4. Report: output the bilingual report template from SKILL.md Step 4.
+  5. Cleanup: ask for explicit user confirmation before uninstalling or archiving anything.
