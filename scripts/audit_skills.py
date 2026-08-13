@@ -343,6 +343,22 @@ def scan_skills_dir(skills_dir: Path, agent: str, scope: str, issues: list) -> l
                         f'{entry.name} in skills dir is not a directory, skipped'), 'warning')
             continue
 
+        # 命名空间目录（如 @user_xxx、learned）：没有 SKILL.md 但含子目录时
+        # 递归扫描其中的真实技能，避免误报 missing_skill_md 并漏报内部技能。
+        # Namespace dirs (e.g. @user_xxx): no SKILL.md but contain subdirs --
+        # recurse to find real skills inside instead of flagging the dir.
+        if not (entry / 'SKILL.md').exists():
+            try:
+                has_subdirs = any(
+                    p.is_dir() and not p.name.startswith('.')
+                    for p in entry.iterdir()
+                )
+            except (PermissionError, OSError):
+                has_subdirs = False
+            if has_subdirs:
+                results.extend(scan_skills_dir(entry, agent, scope, issues))
+                continue
+
         info = scan_skill_dir(entry, agent, scope, issues)
         if info:
             results.append(info)
@@ -520,21 +536,52 @@ def main():
         })
     else:
         detected = detect_current_agent()
-        if not detected:
-            print(L('错误: 无法从脚本路径确定当前 Agent。',
-                    'Error: cannot determine current agent from script path.'), file=sys.stderr)
-            print(L('使用 --agent <name>、--skills-dir <path> 或 --all 手动指定。',
-                    'Use --agent <name>, --skills-dir <path>, or --all to specify manually.'), file=sys.stderr)
-            sys.exit(1)
+        if detected:
+            agent_name, skills_dir = detected
+            # 校验是否为标准技能目录；开发模式下脚本躺在仓库里，反推的
+            # parents[2] 是项目根而非技能根，此时回退到全平台扫描。
+            # Verify this is a standard skills dir; in dev mode the script
+            # lives in a repo, so parents[2] is a project root, not a skills
+            # root -- fall back to scanning all installed agents.
+            is_standard = skills_dir == Path.home() / f'.{agent_name}' / 'skills'
+            if not is_standard and sys.platform == 'win32':
+                appdata = os.environ.get('APPDATA', '')
+                is_standard = any(
+                    skills_dir == Path(appdata) / agent_name / subdir
+                    for subdir in ['SKILLs', 'skills']
+                )
+            if not is_standard:
+                print(L('提示: 脚本路径不是标准技能目录（疑似开发模式），'
+                        '已回退到全平台已安装技能扫描。',
+                        'Note: script path is not a standard skills dir (dev mode?). '
+                        'Falling back to scanning all installed agents.'), file=sys.stderr)
+                detected = None
 
-        agent_name, skills_dir = detected
-        agent_skills = scan_skills_dir(skills_dir, agent_name, 'user', issues)
-        skills.extend(agent_skills)
-        agents_scanned.append({
-            'agent': agent_name,
-            'path': str(skills_dir),
-            'skill_count': len(agent_skills)
-        })
+        if detected:
+            agent_name, skills_dir = detected
+            agent_skills = scan_skills_dir(skills_dir, agent_name, 'user', issues)
+            skills.extend(agent_skills)
+            agents_scanned.append({
+                'agent': agent_name,
+                'path': str(skills_dir),
+                'skill_count': len(agent_skills)
+            })
+        else:
+            all_agents = detect_all_agents()
+            if not all_agents:
+                print(L('错误: 无法确定技能目录。',
+                        'Error: cannot determine a skills directory.'), file=sys.stderr)
+                print(L('使用 --skills-dir <path> 指定自定义路径。',
+                        'Use --skills-dir <path> to specify a custom path.'), file=sys.stderr)
+                sys.exit(1)
+            for agent_name, skills_dir in all_agents:
+                agent_skills = scan_skills_dir(skills_dir, agent_name, 'user', issues)
+                skills.extend(agent_skills)
+                agents_scanned.append({
+                    'agent': agent_name,
+                    'path': str(skills_dir),
+                    'skill_count': len(agent_skills)
+                })
 
     # 扫描项目级技能 / Scan project-level skills
     if workspace:
