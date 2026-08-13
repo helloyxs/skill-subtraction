@@ -447,3 +447,15 @@ Archiving is not simply uninstalling — it saves the skill's core knowledge for
 ```
 
 6. Confirm the archive file was written successfully, then execute uninstall
+
+## VI. Frontmatter Specification & Metadata Standard
+
+To ensure maximum cross-platform compatibility across Agent platforms (Codex, Claude Code, Cursor, WorkBuddy, etc.), `SKILL.md` YAML frontmatter follows strict standard conventions:
+
+1. **Standard Top-Level Fields**:
+   - `name`: Lowercase hyphenated string (e.g., `skill-subtraction`).
+   - `description`: English-primary capability and trigger description, ending with Chinese trigger keywords (covering `skill audit`, `do a skill subtraction`, `技能减法`, `审计已安装技能`).
+2. **Non-Standard & Extended Attributes**:
+   - Top-level frontmatter must only contain standard fields (`name` and `description`).
+   - Non-standard attributes such as `version`, `agent_created`, `required_commands`, `required_privileges`, `metadata.hermes` should be placed inside a nested `metadata:` dictionary or documented within Markdown body sections (`## Requirements` / `## Metadata`).
+

@@ -26,6 +26,7 @@
 
 ## 功能
 
+- **遵循 Agent Skills 规范**：YAML frontmatter 仅包含标准 `name` 与 `description` 字段，非标字段（`version`、`agent_created` 等）统一移入 `metadata:` 或正文，配合英文为主、尾部兼顾中文的触发词描述，保证跨平台 100% 兼容
 - **自动扫描**：一键扫描当前 Agent 平台下的所有已安装技能。脚本通过自身路径自动检测所属平台——装在 `~/.workbuddy/skills/` 下就扫 WorkBuddy，装在 `~/.codex/skills/` 下就扫 Codex，以此类推；同时支持扫描当前工作区 `.workbuddy/skills/` 下的项目级技能
 - **双语输出**：支持中文和英文报告输出，通过 `--lang zh`（默认）或 `--lang en` 控制；stderr 消息、问题描述、审计报告模板均完整双语化
 - **多平台兼容**：兼容 WorkBuddy、Codex、Claude Code、Cursor、Cline、Continue、LobsterAI 等采用 `~/.<agent>/skills/` 目录约定的平台；`--all` 可一键扫描机器上所有已安装的平台

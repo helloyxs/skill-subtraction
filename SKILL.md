@@ -1,6 +1,6 @@
 ---
 name: skill-subtraction
-description: "Audit installed AI skills and recommend keep / archive / uninstall to keep your skill set lean and focused. Triggers when the user asks to check or list installed skills, audit their skills, do a skill subtraction or cleanup, decide which skills to keep or delete, declutter or slim down their skill list, or find redundant or duplicate skills. Scans all installed skills across agent platforms, classifies them (tool / business / news / productivity), scores each on 6 weighted metrics, and generates a structured keep / archive / uninstall report with dedup and batch-install detection. Supports bilingual output (English / Chinese). 技能减法：审计已安装技能，生成保留/归档/卸载建议报告。当用户要求检查已安装技能、清理技能、做技能减法、审计 skill、评估技能去留、整理技能列表时触发。"
+description: "Audit installed AI skills and recommend keep / archive / uninstall to keep your skill set lean and focused. Triggers when the user asks for a skill audit, to check or list installed skills, do a skill subtraction or cleanup, decide which skills to keep or delete, declutter or slim down their skill list, or find redundant or duplicate skills. Scans all installed skills across agent platforms, classifies them (tool / business / news / productivity), scores each on 6 weighted metrics, and generates a structured keep / archive / uninstall report with dedup and batch-install detection. Supports bilingual output (English / Chinese). 技能减法：审计已安装技能，生成保留/归档/卸载建议报告。当用户要求检查已安装技能、清理技能、做技能减法、审计 skill、评估技能去留、整理技能列表时触发。"
 ---
 
 # Skill Subtraction (技能减法)
@@ -27,13 +27,13 @@ Most people keep adding skills — install one, see another, install that too �
 
 ## Language auto-detection (语言自动检测)
 
-The report language follows the conversation language, never asks upfront:
+Never ask the user to select a language upfront. Automatically detect and choose the report language based on the user's input:
 
-- 中文对话 → 输出中文报告，脚本传 `--lang zh`
-- English conversation → English report, script runs with `--lang en`
-- Undetectable → ask the user: "中文报告还是英文报告？"
+- **Chinese input / conversation** → Output Chinese report directly, run script with `--lang zh`
+- **English input / conversation** → Output English report directly, run script with `--lang en`
+- **Ambiguous / Undetectable input** → Only if the language is truly ambiguous (e.g., pure numbers or code only), ask the user: "中文报告还是英文报告？ / Output in Chinese or English?"
 
-Once determined, the language applies to every later step.
+Once determined, stick to that language for all workflow steps (scan, evaluation, report, confirmation).
 
 ## Workflow (工作流程)
 

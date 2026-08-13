@@ -80,7 +80,8 @@ def parse_frontmatter(content: str, issues: list, skill_path: str) -> dict:
     Parse YAML frontmatter from SKILL.md, return a dict.
 
     支持格式 / Supported formats:
-      - 单行 key: value / Single-line key: value
+      - 顶层标准字段 (name, description) / Standard top-level fields
+      - 顶层或 nested metadata 字典 (metadata:\n  version: 1.0.0...)
       - 字符串值（带引号或不带）/ String values (quoted or not)
       - 布尔值 true/false / Boolean true/false
       - 多行折叠字符串（缩进续行）/ Multi-line folded strings
@@ -106,6 +107,8 @@ def parse_frontmatter(content: str, issues: list, skill_path: str) -> dict:
     frontmatter = match.group(1)
     lines = frontmatter.split('\n')
 
+    current_parent_key = None
+
     i = 0
     while i < len(lines):
         line = lines[i]
@@ -115,8 +118,7 @@ def parse_frontmatter(content: str, issues: list, skill_path: str) -> dict:
         if not stripped or stripped.startswith('#'):
             continue
 
-        if line[0:1].isspace() if line else False:
-            continue
+        indent = len(line) - len(line.lstrip())
 
         if ':' not in stripped:
             add_issue(issues, skill_path, 'malformed_frontmatter',
@@ -130,15 +132,17 @@ def parse_frontmatter(content: str, issues: list, skill_path: str) -> dict:
 
         while i < len(lines):
             next_raw = lines[i]
-            if not next_raw.strip():
-                if i + 1 < len(lines) and lines[i + 1] and lines[i + 1][0:1].isspace():
+            next_stripped = next_raw.strip()
+            next_indent = len(next_raw) - len(next_raw.lstrip())
+            if not next_stripped:
+                if i + 1 < len(lines) and lines[i + 1] and (len(lines[i + 1]) - len(lines[i + 1].lstrip()) > indent):
                     value += ' '
                     i += 1
                     continue
                 else:
                     break
-            if next_raw[0:1].isspace():
-                value += ' ' + next_raw.strip()
+            if next_indent > indent and (':' not in next_stripped or (value and value[0] in ('"', "'", '|', '>'))):
+                value += ' ' + next_stripped
                 i += 1
             else:
                 break
@@ -146,12 +150,25 @@ def parse_frontmatter(content: str, issues: list, skill_path: str) -> dict:
         if len(value) >= 2 and value[0] == value[-1] and value[0] in ('"', "'"):
             value = value[1:-1]
 
-        if value.lower() == 'true':
-            value = True
-        elif value.lower() == 'false':
-            value = False
+        val_lower = value.lower()
+        parsed_val: str | bool = value
+        if val_lower == 'true':
+            parsed_val = True
+        elif val_lower == 'false':
+            parsed_val = False
 
-        meta[key] = value
+        if indent > 0 and current_parent_key:
+            if current_parent_key not in meta or not isinstance(meta[current_parent_key], dict):
+                meta[current_parent_key] = {}
+            meta[current_parent_key][key] = parsed_val
+        else:
+            if value == '':
+                current_parent_key = key
+                if key not in meta:
+                    meta[key] = {}
+            else:
+                current_parent_key = None
+                meta[key] = parsed_val
 
     return meta
 
@@ -278,7 +295,10 @@ def scan_skill_dir(skill_path: Path, agent: str, scope: str, issues: list) -> di
                   L('frontmatter 缺少 name 字段，已使用目录名兜底',
                     'Frontmatter missing name field, fell back to directory name'), 'warning')
 
-    if not meta.get('description', '').strip():
+    description_raw = meta.get('description', '')
+    if isinstance(description_raw, dict):
+        description_raw = ''
+    if not str(description_raw).strip():
         add_issue(issues, str(skill_path), 'empty_description',
                   L('frontmatter description 字段为空，技能描述将不完整',
                     'Frontmatter description is empty, skill description will be incomplete'), 'warning')
@@ -290,8 +310,26 @@ def scan_skill_dir(skill_path: Path, agent: str, scope: str, issues: list) -> di
     has_references = (skill_path / 'references').is_dir()
     has_assets = (skill_path / 'assets').is_dir()
 
-    description = meta.get('description', '')
+    description = str(description_raw)
     summary = description[:200] + '...' if len(description) > 200 else description
+
+    metadata_dict = meta.get('metadata') if isinstance(meta.get('metadata'), dict) else {}
+
+    agent_created = bool(
+        meta.get('agent_created', False) or
+        metadata_dict.get('agent_created', False)
+    )
+
+    version = str(
+        meta.get('version') or
+        metadata_dict.get('version') or
+        'unknown'
+    )
+
+    disable_model_invocation = bool(
+        meta.get('disable-model-invocation', False) or
+        metadata_dict.get('disable-model-invocation', False)
+    )
 
     return {
         'name': meta.get('name', skill_path.name),
@@ -299,15 +337,15 @@ def scan_skill_dir(skill_path: Path, agent: str, scope: str, issues: list) -> di
         'scope': scope,
         'path': str(skill_path),
         'description': summary,
-        'agent_created': bool(meta.get('agent_created', False)),
-        'disable_model_invocation': bool(meta.get('disable-model-invocation', False)),
+        'agent_created': agent_created,
+        'disable_model_invocation': disable_model_invocation,
         'has_scripts': has_scripts,
         'has_references': has_references,
         'has_assets': has_assets,
         'file_count': dir_info['file_count'],
         'dir_size_kb': dir_info['dir_size_kb'],
         'last_modified': latest_mtime,
-        'version': str(meta.get('version', 'unknown'))
+        'version': version
     }
 
 

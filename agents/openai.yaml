@@ -6,8 +6,7 @@ default_prompt: |
   clean up or subtract skills, decide which skills to keep or delete, declutter their
   skill list, or find redundant or duplicate skills, use the skill-subtraction skill:
 
-  1. Scan: run `python3 scripts/audit_skills.py --lang <zh|en>` (match the conversation
-     language) to collect metadata for all installed skills.
+  1. Scan: auto-detect language from user input (Chinese -> `--lang zh`, English -> `--lang en`, ask only if truly ambiguous). Run `python3 scripts/audit_skills.py --lang <zh|en>` to collect metadata for all installed skills.
   2. Classify & score: apply the six-metric scoring in SKILL.md (usage frequency 25,
      necessity 20, current relevance 20, enabled status 15, maintenance 10, unique
      value 10); read references/evaluation_framework.md for complex scenarios.

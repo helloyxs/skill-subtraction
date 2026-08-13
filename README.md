@@ -26,6 +26,7 @@ See real generated samples: [English report](examples/audit_report_en.md) · [�
 
 ## Features
 
+- **Agent Skills standard compliant** — strictly adheres to frontmatter specifications (`name` and `description` top-level, non-standard fields in `metadata:` or body) with English-primary, bilingual trigger descriptions for reliable cross-platform execution (Codex, Claude Code, Cursor, WorkBuddy, etc.)
 - **Auto-scan** — detects the hosting agent platform from its own path (`~/.workbuddy/skills/` → WorkBuddy, `~/.codex/skills/` → Codex, …), scans all installed skills, plus project-level skills in the workspace
 - **Bilingual output** — Chinese or English reports via `--lang zh` / `--lang en`; stderr, issue descriptions, and report templates fully localized
 - **Multi-platform** — WorkBuddy, Codex, Claude Code, Cursor, Cline, Continue, LobsterAI, and anything following the `~/.<agent>/skills/` convention; `--all` scans every installed platform
