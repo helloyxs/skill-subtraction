@@ -1,11 +1,11 @@
 ---
 name: skill-subtraction
-description: "Audit installed AI skills and recommend keep / archive / uninstall to keep your skill set lean and focused. Triggers when the user asks for a skill audit, to check or list installed skills, do a skill subtraction or cleanup, decide which skills to keep or delete, declutter or slim down their skill list, or find redundant or duplicate skills. Scans all installed skills across agent platforms, classifies them into 6 industry functional domains (dev & engineering, data & connectors, content & media, domain business, productivity, meta & agent control) plus subcategories, scores each on 6 weighted metrics, and generates a structured keep / archive / uninstall report with dedup and batch-install detection. Supports bilingual output (English / Chinese). 技能减法：审计已安装技能，生成保留/归档/卸载建议报告。当用户要求检查已安装技能、清理技能、做技能减法、审计 skill、评估技能去留、整理技能列表时触发。"
+description: "Check installed AI skills and recommend keep / archive / uninstall to keep your skill set lean and focused. Triggers when the user asks to check or list installed skills, do a skill subtraction or cleanup, decide which skills to keep or delete, declutter or slim down their skill list, or find redundant or duplicate skills. Scans all installed skills across agent platforms, classifies them into 6 industry functional domains (dev & engineering, data & connectors, content & media, domain business, productivity, meta & agent control) plus subcategories, scores each on 6 weighted metrics, and generates a structured keep / archive / uninstall report with dedup and batch-install detection. Supports Chinese and English output. 技能减法：检查已安装技能，生成保留/归档/卸载建议报告。当用户要求检查已安装技能、清理技能、做技能减法、评估技能去留、整理技能列表时触发。"
 ---
 
 # Skill Subtraction (技能减法)
 
-Audit your installed AI skills and cut the fat — a systematic, score-based review of every installed skill with clear keep / archive / uninstall recommendations.
+Check your installed AI skills and cut the fat — a systematic, score-based review of every installed skill with clear keep / archive / uninstall recommendations.
 
 ## Why subtraction (核心理念)
 
@@ -20,7 +20,7 @@ Most people keep adding skills — install one, see another, install that too �
 | Dependency | Requirement | Notes |
 |------|---------|---------|
 | Python | 3.10+ | Stdlib only, no third-party deps |
-| Runtime | `python3` on PATH | The audit script is invoked by this skill |
+| Runtime | `python3` on PATH | The check script is invoked by this skill |
 | Privileges | Non-root | Scan is read-only; uninstall/archive requires user confirmation |
 | Platforms | WorkBuddy / Codex / Claude Code / Cursor / Cline / Continue / LobsterAI | Follows the `~/.<agent>/skills/` directory convention |
 | Env vars | None | No environment variables required |
@@ -35,11 +35,23 @@ Never ask the user to select a language upfront. Automatically detect and choose
 
 Once determined, stick to that language for all workflow steps (scan, evaluation, report, confirmation).
 
+## Report mode selection (报告模式选择)
+
+Before scanning, determine the report depth independently from the language:
+
+- If the user explicitly asks for a **summary** / **inspection summary** / “检查摘要”, produce an **Inspection Summary / 检查摘要**.
+- If the user explicitly asks for a **detailed report** / **full report** / “详细报告” / “完整报告” / “按模板报告”, produce a **Detailed Inspection Report / 详细检查报告**.
+- If the user asks only to scan, check, list, or clean up skills without specifying report depth, ask one concise question before scanning: **“需要检查摘要，还是详细检查报告？ / Would you like an inspection summary or a detailed inspection report?”**
+
+An inspection summary is a decision-oriented overview: scope and per-agent counts, major duplicate or batch findings, scan issues, recommendation counts, and the highest-priority actions. It does not need per-skill scoring tables.
+
+A detailed inspection report must follow the matching example exactly in structure: [Chinese template](examples/audit_report_zh.md) for Chinese input or [English template](examples/audit_report_en.md) for English input. Output only that one language version; generate both versions only when the user explicitly requests a bilingual report. Do not replace it with a summary. Include the report mode, scan scope, each skill’s agent/platform placement, recommendation tables, archived inventory immediately after suggested archive, scoring details, and any duplicate or scan issues in the summary; then request cleanup confirmation separately.
+
 ## Workflow (工作流程)
 
 ### Step 1: Scan installed skills
 
-Run the audit script; it auto-detects the hosting agent platform from its own path and scans that platform's installed skills (plus project-level skills in the current workspace). Pass `--lang zh|en` to match the conversation language:
+Run the check script; it auto-detects the hosting agent platform from its own path and scans that platform's installed skills (plus project-level skills in the current workspace). Pass `--lang zh|en` to match the conversation language. For every detailed inspection report, also pass `--archives` so the archived inventory is included:
 
 ```bash
 python3 scripts/audit_skills.py --lang zh   # or --lang en
@@ -67,31 +79,38 @@ Apply the classification and scoring from the [Evaluation framework](#evaluation
 
 Map the composite score to keep / archive / uninstall using the decision matrix and special rules in the [Evaluation framework](#evaluation-framework-评估框架) section.
 
-### Step 4: Output the report
+### Step 4: Output the selected report mode
 
-Using the language determined in the auto-detection section, output the matching template:
+Using the language and report mode determined above:
+
+- **Inspection Summary / 检查摘要**: give a compact decision summary. State the scan scope, per-agent counts, distinct-skill count, cross-agent deployments (which are not same-platform duplicates), batch/duplicate findings, scan issues, keep/archive/uninstall counts, and the next action requiring confirmation.
+- **Detailed Inspection Report / 详细检查报告**: follow the Chinese template for Chinese input and the English template for English input. Output one language only unless the user explicitly requests a bilingual report. The templates below define its mandatory sections and tables; the examples define the expected complete presentation.
+
+For a detailed report, output only the matching single-language template:
 
 ```markdown
-# 技能减法审计报告
+# 技能减法检查报告
 
-**审计时间**：YYYY-MM-DD
+**检查时间**：YYYY-MM-DD
 **技能总数**：N 个（用户级 X 个，项目级 Y 个）
+**扫描平台**：Agent A（X 个）+ Agent B（Y 个）
+**报告模式**：详细检查报告
 
 ## 建议保留（N 个）
 
-| 技能 | 类型 | 细分领域 | 保留理由 | 使用频率 |
-|------|------|---------|---------|---------|
-| ... | ... | ... | ... | ... |
+| 技能 | 所在 Agent | 类型 | 细分领域 | 保留理由 | 使用频率 | 综合评分 |
+|------|-----------|------|---------|---------|---------|---------|
+| ... | ... | ... | ... | ... | ... | ... |
 
 ## 建议归档（N 个）
 
-| 技能 | 类型 | 细分领域 | 归档理由 | 重新激活条件 |
-|------|------|---------|---------|------------|
-| ... | ... | ... | ... | ... |
+| 技能 | 所在 Agent | 类型 | 细分领域 | 归档理由 | 重新激活条件 | 综合评分 |
+|------|-----------|------|---------|---------|------------|---------|
+| ... | ... | ... | ... | ... | ... | ... |
 
-## 已归档技能库（归档库扫描或本次归档后补扫时显示）
+## 已归档技能库（N 个）
 
-补扫已确认并列出以下归档记录。归档记录不计入已安装技能总数，也不参与建议评分。
+详细检查已扫描归档库并列出以下记录；如无记录，明确写“无已归档技能”。归档记录不计入已安装技能总数，也不参与建议评分。
 
 | 技能 | 归档日期 | 原归档原因 | 重新激活条件 | 含 SKILL.md 源文件 |
 |------|----------|------------|--------------|-------------------|
@@ -99,40 +118,48 @@ Using the language determined in the auto-detection section, output the matching
 
 ## 卸载（N 个）
 
-| 技能 | 类型 | 细分领域 | 卸载理由 | 风险评估 |
-|------|------|---------|---------|---------|
-| ... | ... | ... | ... | ... |
+| 技能 | 所在 Agent | 类型 | 细分领域 | 卸载理由 | 风险评估 | 综合评分 |
+|------|-----------|------|---------|---------|---------|---------|
+| ... | ... | ... | ... | ... | ... | ... |
+
+## 评分明细
+
+| 技能 | 所在 Agent | 使用频率(25) | 必要性(20) | 相关性(20) | 启用状态(15) | 维护(10) | 独特价值(10) | 总分 |
+|------|-----------|-------------|-----------|------------|-------------|---------|-------------|------|
+| ... | ... | ... | ... | ... | ... | ... | ... | ... |
 
 ## 汇总建议
 
 - 当前技能集健康度：高/中/低
 - 主要问题：...
-- 下次审计建议时间：...
+- 下次检查建议时间：...
 ```
 
-When archive inventory scanning is requested, add an **已归档技能库** / **Archived Inventory** section immediately after **建议归档** / **Suggested Archive** and before **卸载** / **Uninstall**. After executing any archive action in the current workflow, re-scan with `--archives` before issuing the final report, then add this section even if archive scanning was not requested initially. State that the post-archive scan confirmed the listed records. List the archive date, original archive reason, reactivation condition, and whether the saved record contains `SKILL.md` source. This is an inventory and recovery-readiness check, not a recommendation to reinstall anything.
+Every detailed inspection report must include an **已归档技能库** / **Archived Inventory** section immediately after **建议归档** / **Suggested Archive** and before **卸载** / **Uninstall**, even when no archived skills exist. After executing any archive action in the current workflow, re-scan with `--archives` before issuing the final report. State that the check confirmed the listed records. List the archive date, original archive reason, reactivation condition, and whether the saved record contains `SKILL.md` source. This is an inventory and recovery-readiness check, not a recommendation to reinstall anything.
 
 ```markdown
-# Skill Subtraction Audit Report
+# Skill Subtraction Inspection Report
 
-**Audit Date**: YYYY-MM-DD
+**Inspection Date**: YYYY-MM-DD
 **Total Skills**: N (User-level: X, Project-level: Y)
+**Scanned Platforms**: Agent A (X) + Agent B (Y)
+**Report Mode**: Detailed Inspection Report
 
 ## Suggested Keep (N)
 
-| Skill | Type | Subcategory | Reason to Keep | Usage Frequency |
-|-------|------|-------------|---------------|-----------------|
-| ... | ... | ... | ... | ... |
+| Skill | Agent Placement | Type | Subcategory | Reason to Keep | Usage Frequency | Score |
+|-------|-----------------|------|-------------|----------------|-----------------|-------|
+| ... | ... | ... | ... | ... | ... | ... |
 
 ## Suggested Archive (N)
 
-| Skill | Type | Subcategory | Reason to Archive | Reactivation Condition |
-|-------|------|-------------|--------------------|-----------------------|
-| ... | ... | ... | ... | ... |
+| Skill | Agent Placement | Type | Subcategory | Reason to Archive | Reactivation Condition | Score |
+|-------|-----------------|------|-------------|-------------------|------------------------|-------|
+| ... | ... | ... | ... | ... | ... | ... |
 
-## Archived Inventory (shown after archive-inventory scanning or a post-archive re-scan)
+## Archived Inventory (N)
 
-A post-archive scan confirmed the following archived records. They are excluded from the installed-skill total and recommendation scoring.
+The detailed inspection scanned the archive inventory and confirmed the following records. If there are none, explicitly state “No archived skills.” They are excluded from the installed-skill total and recommendation scoring.
 
 | Skill | Archive Date | Original Archive Reason | Reactivation Condition | Includes SKILL.md Source |
 |-------|--------------|-------------------------|------------------------|--------------------------|
@@ -140,27 +167,33 @@ A post-archive scan confirmed the following archived records. They are excluded 
 
 ## Uninstall (N)
 
-| Skill | Type | Subcategory | Reason to Uninstall | Risk Assessment |
-|-------|------|-------------|---------------------|-----------------|
-| ... | ... | ... | ... | ... |
+| Skill | Agent Placement | Type | Subcategory | Reason to Uninstall | Risk Assessment | Score |
+|-------|-----------------|------|-------------|---------------------|-----------------|-------|
+| ... | ... | ... | ... | ... | ... | ... |
+
+## Scoring Details
+
+| Skill | Agent Placement | Usage (25) | Necessity (20) | Relevance (20) | Status (15) | Maintenance (10) | Unique Value (10) | Total |
+|-------|-----------------|------------|----------------|----------------|-------------|------------------|-------------------|-------|
+| ... | ... | ... | ... | ... | ... | ... | ... | ... |
 
 ## Summary
 
 - Current skill set health: High/Medium/Low
 - Main issues: ...
-- Recommended next audit: ...
+- Recommended next inspection: ...
 ```
 
 ### Step 5: Execute cleanup (user confirmation required)
 
-After outputting the report, ask the user whether to execute cleanup. **Never uninstall skills without consent.**
+After outputting the check report, ask the user whether to execute cleanup. **Never uninstall skills without consent.**
 
 - **Execute cleanup**: uninstall (via SkillManage) / archive (save SKILL.md and key config files to `~/.<agent>/skill-archive/<skill-name>.md`, then uninstall) / keep (no action)
 - **Report only**: no action, the user decides later
 
 Show each action before executing; proceed only after explicit confirmation. After an archive action succeeds, re-scan the archive inventory and include the confirmed archived record in the final report.
 
-## Audit cycle recommendations (审计周期建议)
+## Inspection cycle recommendations (检查周期建议)
 
 | Frequency | Scenario |
 |------|---------|
@@ -172,9 +205,9 @@ Show each action before executing; proceed only after explicit confirmation. Aft
 ## Bundled resources (捆绑资源)
 
 - `scripts/audit_skills.py` — auto-detects the hosting agent platform, scans all installed skills, parses frontmatter, outputs structured JSON
-- `scripts/audit_skills.py --archives` — separately scans default archived-skill records; `--archive-dir` supports a custom archive location
+- `scripts/audit_skills.py --archives` — scans default archived-skill records; `--archive-dir` supports a custom archive location
 - `references/evaluation_framework.md` — full bilingual framework: classification, 6-metric scoring detail, decision matrix, special rules, dedup priority, archive standard and template. Read it for complex scenarios (batch dedup, archive recovery, platform-preinstalled batch filtering)
-- `examples/` — sample audit reports (English & Chinese), useful as expected-output references and demo material
+- `examples/` — sample check reports (English & Chinese), useful as expected-output references and demo material
 
 ## Evaluation framework (评估框架)
 
