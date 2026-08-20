@@ -46,12 +46,14 @@ python3 scripts/audit_skills.py --lang zh   # or --lang en
 python3 scripts/audit_skills.py --agent codex
 python3 scripts/audit_skills.py --all
 python3 scripts/audit_skills.py --skills-dir "C:\Users\admin\AppData\Roaming\LobsterAI\SKILLs"
+python3 scripts/audit_skills.py --archives              # scan the detected agents' archive inventories
+python3 scripts/audit_skills.py --archive-dir /path/to/skill-archive
 python3 scripts/audit_skills.py --workspace /path/to/workspace
 ```
 
 Cross-platform notes: the script handles Windows GBK encoding and non-standard `AppData/Roaming/<Agent>/SKILLs` paths. Every failure point logs an issue into the JSON `issues` field and prints a stderr summary. Issue types: `missing_skill_md`, `unreadable_skill_md`, `permission_denied`, `broken_symlink` (error level); `no_frontmatter`, `malformed_frontmatter`, `no_name_field`, `empty_description`, `not_a_directory` (warning level). Exit codes: 0 = clean, 2 = scan done with error-level issues (CI-friendly).
 
-Output is a JSON array; each entry includes `name`, `agent`, `scope`, `path`, `description`, `agent_created`, `has_scripts`, `has_references`, `file_count`, `dir_size`, `last_modified`, `version`. Plus `source_stats` (install-source counts) and `batch_installs` (≥ 5 skills created the same day → flagged as a batch).
+Output includes installed skills plus a separate `archived_skills` inventory; archive records include their archive date, reason, reactivation condition, source path, and integrity indicator. `--archives` checks each detected agent's default `~/.<agent>/skill-archive/`; `--archive-dir` checks a specified archive directory. Archived records are never counted as installed skills or fed into keep/archive/uninstall scoring.
 
 ### Step 2: Classify & score
 
@@ -99,6 +101,8 @@ Using the language determined in the auto-detection section, output the matching
 - 主要问题：...
 - 下次审计建议时间：...
 ```
+
+When archive inventory scanning is requested, add an **已归档技能库** / **Archived Inventory** section after the summary. List the archive date, original archive reason, reactivation condition, and whether the saved record contains `SKILL.md` source. This is an inventory and recovery-readiness check, not a recommendation to reinstall anything.
 
 ```markdown
 # Skill Subtraction Audit Report
@@ -152,6 +156,7 @@ Show each action before executing; proceed only after explicit confirmation.
 ## Bundled resources (捆绑资源)
 
 - `scripts/audit_skills.py` — auto-detects the hosting agent platform, scans all installed skills, parses frontmatter, outputs structured JSON
+- `scripts/audit_skills.py --archives` — separately scans default archived-skill records; `--archive-dir` supports a custom archive location
 - `references/evaluation_framework.md` — full bilingual framework: classification, 6-metric scoring detail, decision matrix, special rules, dedup priority, archive standard and template. Read it for complex scenarios (batch dedup, archive recovery, platform-preinstalled batch filtering)
 - `examples/` — sample audit reports (English & Chinese), useful as expected-output references and demo material
 

@@ -27,7 +27,7 @@ See real generated samples: [English report](examples/audit_report_en.md) · [�
 ## Features
 
 - **Agent Skills standard compliant** — strictly adheres to frontmatter specifications (`name` and `description` top-level, non-standard fields in `metadata:` or body) with English-primary, bilingual trigger descriptions for reliable cross-platform execution (Codex, Claude Code, Cursor, WorkBuddy, etc.)
-- **Auto-scan** — detects the hosting agent platform from its own path (`~/.workbuddy/skills/` → WorkBuddy, `~/.codex/skills/` → Codex, …), scans all installed skills, plus project-level skills in the workspace
+- **Auto-scan** — detects the hosting agent platform from its own path (`~/.workbuddy/skills/` → WorkBuddy, `~/.codex/skills/` → Codex, …), scans all installed skills, plus project-level skills in the workspace; archive inventories can be scanned separately
 - **Bilingual output** — Chinese or English reports via `--lang zh` / `--lang en`; stderr, issue descriptions, and report templates fully localized
 - **Multi-platform** — WorkBuddy, Codex, Claude Code, Cursor, Cline, Continue, LobsterAI, and anything following the `~/.<agent>/skills/` convention; `--all` scans every installed platform
 - **Score-based evaluation** — classifies skills into 6 industry functional domains (dev & engineering, data & connectors, content & media, domain business, productivity, meta & agent control) plus subcategories, and scores each on 6 weighted metrics (usage frequency, necessity, current relevance, enabled status, maintenance, unique value)
@@ -74,9 +74,11 @@ python3 scripts/audit_skills.py --agent codex
 python3 scripts/audit_skills.py --all        # scan all installed platforms
 python3 scripts/audit_skills.py --workspace /path/to/workspace
 python3 scripts/audit_skills.py --skills-dir "C:\Users\admin\AppData\Roaming\LobsterAI\SKILLs"
+python3 scripts/audit_skills.py --archives              # scan default archive inventories
+python3 scripts/audit_skills.py --archive-dir /path/to/skill-archive
 ```
 
-Output is a JSON array; each entry includes `name`, `agent`, `scope`, `path`, `description`, `agent_created`, `has_scripts`, `has_references`, `file_count`, `dir_size`, `last_modified`, `version`, plus `source_stats` and `batch_installs`. Exit codes: 0 = clean, 2 = scan done with error-level issues (CI-friendly).
+Output contains installed `skills` and a separate `archived_skills` inventory. Archive entries include their date, reason, reactivation condition, source path, and whether the record contains the original `SKILL.md`. `--archives` checks each detected agent's `~/.<agent>/skill-archive/`; `--archive-dir` checks a specific directory. Archived records are not counted or scored as installed skills. Exit codes: 0 = clean, 2 = scan done with error-level issues (CI-friendly).
 
 ## Evaluation framework
 

@@ -3,7 +3,9 @@
 技能减法 · 技能扫描脚本 / Skill Subtraction · Skill Audit Script
 
 自动检测当前脚本所在的 Agent 平台，只扫描该平台下的已安装技能。
-Auto-detects the current Agent platform and scans installed skills only.
+Auto-detects the current Agent platform and scans installed skills. Archive
+inventories can be scanned separately without treating archived records as
+installed skills.
 
 语言支持 / Language Support:
   --lang zh  (默认) 中文输出
@@ -29,6 +31,8 @@ Auto-detects the current Agent platform and scans installed skills only.
     python3 audit_skills.py --agent codex                      # 手动指定 Agent / Specify agent
     python3 audit_skills.py --all                              # 扫描所有已安装的 Agent / Scan all
     python3 audit_skills.py --skills-dir /custom/skills/path   # 自定义技能目录 / Custom dir
+    python3 audit_skills.py --archives                          # 扫描默认归档库 / Scan default archives
+    python3 audit_skills.py --archive-dir /custom/skill-archive # 自定义归档库 / Custom archive dir
     python3 audit_skills.py --workspace /path/to/ws            # 同时扫描项目级技能 / Include project skills
 """
 
@@ -404,6 +408,81 @@ def scan_skills_dir(skills_dir: Path, agent: str, scope: str, issues: list) -> l
     return results
 
 
+def scan_archive_record(record_path: Path, agent: str, issues: list) -> dict | None:
+    """Read one Markdown archive record written by the archive workflow."""
+    try:
+        content = record_path.read_text(encoding='utf-8')
+    except PermissionError as e:
+        add_issue(issues, str(record_path), 'permission_denied',
+                  L(f'无法读取归档记录: {e.strerror}', f'Cannot read archive record: {e.strerror}'), 'error')
+        return None
+    except (UnicodeDecodeError, OSError) as e:
+        add_issue(issues, str(record_path), 'unreadable_archive_record',
+                  L(f'读取归档记录失败: {type(e).__name__}: {e}',
+                    f'Failed to read archive record: {type(e).__name__}: {e}'), 'error')
+        return None
+
+    def field(*labels: str) -> str:
+        for label in labels:
+            match = re.search(rf'^\*\*{re.escape(label)}\*\*[:：]\s*(.+?)\s*$', content, re.MULTILINE)
+            if match:
+                return match.group(1)
+        return ''
+
+    title = re.search(r'^#\s+(?:Archived Skill|归档技能)[:：]\s*(.+?)\s*$', content, re.MULTILINE)
+    name = title.group(1) if title else record_path.stem
+    if not title:
+        add_issue(issues, str(record_path), 'archive_name_inferred',
+                  L('归档记录缺少标准标题，已使用文件名作为技能名',
+                    'Archive record lacks a standard title; used filename as skill name'), 'warning')
+
+    try:
+        modified = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(record_path.stat().st_mtime))
+        size_kb = round(record_path.stat().st_size / 1024, 1)
+    except OSError:
+        modified, size_kb = 'unknown', 0
+
+    return {
+        'name': name,
+        'agent': agent,
+        'scope': 'archive',
+        'status': 'archived',
+        'path': str(record_path),
+        'archive_date': field('Archive Date', '归档时间') or 'unknown',
+        'archive_reason': field('Archive Reason', '归档原因') or 'unknown',
+        'reactivation_condition': field('Reactivation Condition', '重新激活条件') or 'unknown',
+        'has_skill_source': '## SKILL.md 原文' in content or '## SKILL.md Source' in content,
+        'file_size_kb': size_kb,
+        'last_modified': modified,
+    }
+
+
+def scan_archive_dir(archive_dir: Path, agent: str, issues: list) -> list[dict]:
+    """Scan Markdown records in an archive directory, preserving archive status."""
+    if not archive_dir.exists():
+        return []
+    try:
+        entries = sorted(archive_dir.iterdir())
+    except PermissionError as e:
+        add_issue(issues, str(archive_dir), 'permission_denied',
+                  L(f'无法列出归档目录: {e.strerror}', f'Cannot list archive directory: {e.strerror}'), 'error')
+        return []
+
+    records = []
+    for entry in entries:
+        if entry.name.startswith('.'):
+            continue
+        if entry.is_symlink() and not entry.exists():
+            add_issue(issues, str(entry), 'broken_symlink',
+                      L('归档记录符号链接指向不存在的位置', 'Archive record symlink points to non-existent target'), 'error')
+            continue
+        if entry.is_file() and entry.suffix.lower() == '.md':
+            record = scan_archive_record(entry, agent, issues)
+            if record:
+                records.append(record)
+    return records
+
+
 def detect_all_agents() -> list[tuple[str, Path]]:
     """检测机器上所有已安装的 Agent 平台 / Detect all installed Agent platforms."""
     found = []
@@ -489,6 +568,8 @@ def main():
     workspace = None
     scan_all = False
     skills_dir_override = None
+    scan_archives = False
+    archive_dir_overrides: list[str] = []
 
     args = sys.argv[1:]
     i = 0
@@ -502,6 +583,12 @@ def main():
         elif args[i] == '--skills-dir' and i + 1 < len(args):
             skills_dir_override = args[i + 1]
             i += 2
+        elif args[i] == '--archive-dir' and i + 1 < len(args):
+            archive_dir_overrides.append(args[i + 1])
+            i += 2
+        elif args[i] == '--archives':
+            scan_archives = True
+            i += 1
         elif args[i] == '--lang' and i + 1 < len(args):
             lang_val = args[i + 1].strip().lower()
             if lang_val in ('zh', 'en'):
@@ -519,7 +606,9 @@ def main():
     # ── 收集所有问题 / Collect all issues ──
     issues: list[dict] = []
     skills: list[dict] = []
+    archived_skills: list[dict] = []
     agents_scanned: list[dict] = []
+    archive_dirs_scanned: list[dict] = []
 
     # ── 确定扫描目标 / Determine scan target ──
     if skills_dir_override:
@@ -628,6 +717,38 @@ def main():
         project_skills = scan_skills_dir(project_dir, project_agent, 'project', issues)
         skills.extend(project_skills)
 
+    # 扫描归档库 / Scan archive inventories. Archive records stay separate from
+    # installed skills so the normal scoring and installation counts remain valid.
+    if scan_archives:
+        for agent_info in agents_scanned:
+            agent_name = agent_info['agent']
+            archive_dir = Path.home() / f'.{agent_name}' / 'skill-archive'
+            if not archive_dir.exists():
+                continue
+            records = scan_archive_dir(archive_dir, agent_name, issues)
+            archived_skills.extend(records)
+            archive_dirs_scanned.append({
+                'agent': agent_name,
+                'path': str(archive_dir),
+                'archive_count': len(records),
+            })
+
+    for archive_dir_value in archive_dir_overrides:
+        archive_dir = Path(archive_dir_value)
+        if not archive_dir.exists():
+            print(L(f'错误: 归档目录不存在: {archive_dir}',
+                    f'Error: archive directory not found: {archive_dir}'), file=sys.stderr)
+            sys.exit(1)
+        parent_name = archive_dir.parent.name.lower()
+        agent_name = parent_name[1:] if parent_name.startswith('.') else parent_name
+        records = scan_archive_dir(archive_dir, agent_name or 'unknown', issues)
+        archived_skills.extend(records)
+        archive_dirs_scanned.append({
+            'agent': agent_name or 'unknown',
+            'path': str(archive_dir),
+            'archive_count': len(records),
+        })
+
     # ── 批量安装检测 / Batch install detection ──
     batch_installs = detect_batch_installs(skills)
 
@@ -643,7 +764,9 @@ def main():
     output = {
         'audit_time': time.strftime('%Y-%m-%d %H:%M:%S'),
         'total_skills': len(skills),
+        'total_archived_skills': len(archived_skills),
         'agents_scanned': agents_scanned,
+        'archive_dirs_scanned': archive_dirs_scanned,
         'user_skills': sum(1 for s in skills if s['scope'] == 'user'),
         'project_skills': sum(1 for s in skills if s['scope'] == 'project'),
         'source_stats': source_stats,
@@ -655,7 +778,8 @@ def main():
             'by_type': {}
         },
         'issues': issues,
-        'skills': skills
+        'skills': skills,
+        'archived_skills': archived_skills,
     }
 
     for issue in issues:

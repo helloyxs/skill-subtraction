@@ -27,7 +27,7 @@
 ## 功能
 
 - **遵循 Agent Skills 规范**：YAML frontmatter 仅包含标准 `name` 与 `description` 字段，非标字段（`version`、`agent_created` 等）统一移入 `metadata:` 或正文，配合英文为主、尾部兼顾中文的触发词描述，保证跨平台 100% 兼容
-- **自动扫描**：一键扫描当前 Agent 平台下的所有已安装技能。脚本通过自身路径自动检测所属平台——装在 `~/.workbuddy/skills/` 下就扫 WorkBuddy，装在 `~/.codex/skills/` 下就扫 Codex，以此类推；同时支持扫描当前工作区 `.workbuddy/skills/` 下的项目级技能
+- **自动扫描**：一键扫描当前 Agent 平台下的所有已安装技能。脚本通过自身路径自动检测所属平台——装在 `~/.workbuddy/skills/` 下就扫 WorkBuddy，装在 `~/.codex/skills/` 下就扫 Codex，以此类推；同时支持扫描当前工作区 `.workbuddy/skills/` 下的项目级技能，以及单独盘点归档库
 - **双语输出**：支持中文和英文报告输出，通过 `--lang zh`（默认）或 `--lang en` 控制；stderr 消息、问题描述、审计报告模板均完整双语化
 - **多平台兼容**：兼容 WorkBuddy、Codex、Claude Code、Cursor、Cline、Continue、LobsterAI 等采用 `~/.<agent>/skills/` 目录约定的平台；`--all` 可一键扫描机器上所有已安装的平台
 - **分类评估**：按开发工程 / 数据集成 / 内容创作 / 专业业务 / 通用生产力 / 元技能 6 大业界功能分类及细分领域评估，六指标打分（使用频率、必要性、当前相关性、启用状态、维护状态、独特价值）
@@ -74,9 +74,11 @@ python3 scripts/audit_skills.py --agent codex
 python3 scripts/audit_skills.py --all        # 扫描所有已安装的 Agent 平台
 python3 scripts/audit_skills.py --workspace /path/to/workspace
 python3 scripts/audit_skills.py --skills-dir "C:\Users\admin\AppData\Roaming\LobsterAI\SKILLs"
+python3 scripts/audit_skills.py --archives              # 扫描默认归档库
+python3 scripts/audit_skills.py --archive-dir /path/to/skill-archive
 ```
 
-输出为 JSON 数组，每个元素包含 `name`、`agent`、`scope`、`path`、`description`、`agent_created`、`has_scripts`、`has_references`、`file_count`、`dir_size`、`last_modified`、`version`，以及 `source_stats` 和 `batch_installs`。退出码：0 = 完全正常，2 = 扫描完成但有 error 级问题（方便 CI 接入）。
+输出同时包含已安装的 `skills` 与独立的 `archived_skills` 归档清单。归档条目包括归档时间、原因、重新激活条件、来源路径，以及是否包含原始 `SKILL.md`。`--archives` 检查每个已检测 Agent 的 `~/.<agent>/skill-archive/`；`--archive-dir` 可指定任意归档目录。归档记录不计入已安装技能数量，也不会参与保留/归档/卸载评分。退出码：0 = 完全正常，2 = 扫描完成但有 error 级问题（方便 CI 接入）。
 
 ## 评估框架
 
