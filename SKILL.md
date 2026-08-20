@@ -77,16 +77,24 @@ Using the language determined in the auto-detection section, output the matching
 **审计时间**：YYYY-MM-DD
 **技能总数**：N 个（用户级 X 个，项目级 Y 个）
 
-## 保留（N 个）
+## 建议保留（N 个）
 
 | 技能 | 类型 | 细分领域 | 保留理由 | 使用频率 |
 |------|------|---------|---------|---------|
 | ... | ... | ... | ... | ... |
 
-## 归档（N 个）
+## 建议归档（N 个）
 
 | 技能 | 类型 | 细分领域 | 归档理由 | 重新激活条件 |
 |------|------|---------|---------|------------|
+| ... | ... | ... | ... | ... |
+
+## 已归档技能库（归档库扫描或本次归档后补扫时显示）
+
+补扫已确认并列出以下归档记录。归档记录不计入已安装技能总数，也不参与建议评分。
+
+| 技能 | 归档日期 | 原归档原因 | 重新激活条件 | 含 SKILL.md 源文件 |
+|------|----------|------------|--------------|-------------------|
 | ... | ... | ... | ... | ... |
 
 ## 卸载（N 个）
@@ -102,7 +110,7 @@ Using the language determined in the auto-detection section, output the matching
 - 下次审计建议时间：...
 ```
 
-When archive inventory scanning is requested, add an **已归档技能库** / **Archived Inventory** section after the summary. List the archive date, original archive reason, reactivation condition, and whether the saved record contains `SKILL.md` source. This is an inventory and recovery-readiness check, not a recommendation to reinstall anything.
+When archive inventory scanning is requested, add an **已归档技能库** / **Archived Inventory** section immediately after **建议归档** / **Suggested Archive** and before **卸载** / **Uninstall**. After executing any archive action in the current workflow, re-scan with `--archives` before issuing the final report, then add this section even if archive scanning was not requested initially. State that the post-archive scan confirmed the listed records. List the archive date, original archive reason, reactivation condition, and whether the saved record contains `SKILL.md` source. This is an inventory and recovery-readiness check, not a recommendation to reinstall anything.
 
 ```markdown
 # Skill Subtraction Audit Report
@@ -110,16 +118,24 @@ When archive inventory scanning is requested, add an **已归档技能库** / **
 **Audit Date**: YYYY-MM-DD
 **Total Skills**: N (User-level: X, Project-level: Y)
 
-## Keep (N)
+## Suggested Keep (N)
 
 | Skill | Type | Subcategory | Reason to Keep | Usage Frequency |
 |-------|------|-------------|---------------|-----------------|
 | ... | ... | ... | ... | ... |
 
-## Archive (N)
+## Suggested Archive (N)
 
 | Skill | Type | Subcategory | Reason to Archive | Reactivation Condition |
 |-------|------|-------------|--------------------|-----------------------|
+| ... | ... | ... | ... | ... |
+
+## Archived Inventory (shown after archive-inventory scanning or a post-archive re-scan)
+
+A post-archive scan confirmed the following archived records. They are excluded from the installed-skill total and recommendation scoring.
+
+| Skill | Archive Date | Original Archive Reason | Reactivation Condition | Includes SKILL.md Source |
+|-------|--------------|-------------------------|------------------------|--------------------------|
 | ... | ... | ... | ... | ... |
 
 ## Uninstall (N)
@@ -142,7 +158,7 @@ After outputting the report, ask the user whether to execute cleanup. **Never un
 - **Execute cleanup**: uninstall (via SkillManage) / archive (save SKILL.md and key config files to `~/.<agent>/skill-archive/<skill-name>.md`, then uninstall) / keep (no action)
 - **Report only**: no action, the user decides later
 
-Show each action before executing; proceed only after explicit confirmation.
+Show each action before executing; proceed only after explicit confirmation. After an archive action succeeds, re-scan the archive inventory and include the confirmed archived record in the final report.
 
 ## Audit cycle recommendations (审计周期建议)
 

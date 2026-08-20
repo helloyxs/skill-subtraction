@@ -5,7 +5,7 @@
 
 ---
 
-## Keep (3)
+## Suggested Keep (3)
 
 | Skill | Type | Subcategory | Reason to Keep | Usage Frequency |
 |-------|------|-------------|----------------|-----------------|
@@ -13,7 +13,7 @@
 | competitor-analysis | Domain & Business | Marketing & Competitors | Standardized competitor analysis framework with references and assets; recently created (Aug 7); structured output ensures consistent quality | Low (monthly) |
 | github-ai-trends | Data & Connectors | SaaS & API Connectors | Unique capability — fetches GitHub trending AI/ML/LLM repos by daily/weekly/monthly period; no overlap with other skills; v1.1.0 | Low (monthly) |
 
-## Archive (2)
+## Suggested Archive (2)
 
 | Skill | Type | Subcategory | Reason to Archive | Reactivation Condition |
 |-------|------|-------------|---------------------|-----------------------|
