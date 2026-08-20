@@ -45,6 +45,14 @@ from pathlib import Path
 from collections import Counter
 
 
+# Skill files can be authored by third parties. The audit only needs their
+# frontmatter, so never load an entire SKILL.md just to extract metadata.
+MAX_FRONTMATTER_BYTES = 64 * 1024
+# Archive metadata is expected at the beginning of an archive record. Keep
+# this bounded as archive records may embed a complete SKILL.md source.
+MAX_ARCHIVE_RECORD_BYTES = 64 * 1024
+
+
 # ── Windows 编码修复 / Windows encoding fix ──────────────────
 if sys.platform == 'win32':
     try:
@@ -76,6 +84,87 @@ def add_issue(issues: list, path: str, issue_type: str, message: str, severity: 
         'severity': severity,
         'message': message
     })
+
+
+def read_frontmatter(skill_md: Path, issues: list) -> str | None:
+    """Read only the YAML frontmatter needed for a skill inventory.
+
+    Skill instructions are untrusted input for this utility. Do not ingest a
+    skill's body: it is neither needed for classification metadata nor safe to
+    surface in the audit output.
+    """
+    try:
+        with skill_md.open('rb') as source:
+            chunks: list[bytes] = []
+            size = 0
+            closed = False
+            while size <= MAX_FRONTMATTER_BYTES:
+                line = source.readline(MAX_FRONTMATTER_BYTES - size + 1)
+                if not line:
+                    break
+                chunks.append(line)
+                size += len(line)
+                if len(chunks) > 1 and line.strip() == b'---':
+                    closed = True
+                    break
+                if size > MAX_FRONTMATTER_BYTES:
+                    break
+    except PermissionError as e:
+        add_issue(issues, str(skill_md), 'permission_denied',
+                  L(f'无法读取 SKILL.md: {e.strerror}', f'Cannot read SKILL.md: {e.strerror}'), 'error')
+        return None
+    except OSError as e:
+        add_issue(issues, str(skill_md), 'unreadable_skill_md',
+                  L(f'读取 SKILL.md 失败: {type(e).__name__}',
+                    f'Failed to read SKILL.md: {type(e).__name__}'), 'error')
+        return None
+
+    raw = b''.join(chunks)
+    try:
+        content = raw.decode('utf-8')
+    except UnicodeDecodeError:
+        add_issue(issues, str(skill_md), 'unreadable_skill_md',
+                  L('SKILL.md frontmatter 编码异常（非 UTF-8）',
+                    'SKILL.md frontmatter encoding error (non-UTF-8)'), 'error')
+        return None
+
+    if size > MAX_FRONTMATTER_BYTES and not closed:
+        add_issue(issues, str(skill_md), 'frontmatter_too_large',
+                  L(f'frontmatter 超过 {MAX_FRONTMATTER_BYTES // 1024} KB 限制，已停止读取',
+                    f'Frontmatter exceeded the {MAX_FRONTMATTER_BYTES // 1024} KB limit; stopped reading'),
+                  'error')
+        return None
+
+    return content
+
+
+def read_archive_metadata(record_path: Path, issues: list) -> str | None:
+    """Read a bounded archive header; never ingest an embedded skill body."""
+    try:
+        with record_path.open('rb') as source:
+            raw = source.read(MAX_ARCHIVE_RECORD_BYTES + 1)
+    except PermissionError as e:
+        add_issue(issues, str(record_path), 'permission_denied',
+                  L(f'无法读取归档记录: {e.strerror}', f'Cannot read archive record: {e.strerror}'), 'error')
+        return None
+    except OSError as e:
+        add_issue(issues, str(record_path), 'unreadable_archive_record',
+                  L(f'读取归档记录失败: {type(e).__name__}',
+                    f'Failed to read archive record: {type(e).__name__}'), 'error')
+        return None
+
+    if len(raw) > MAX_ARCHIVE_RECORD_BYTES:
+        raw = raw[:MAX_ARCHIVE_RECORD_BYTES]
+        add_issue(issues, str(record_path), 'archive_record_truncated',
+                  L(f'归档记录超过 {MAX_ARCHIVE_RECORD_BYTES // 1024} KB 限制；仅检查元数据区',
+                    f'Archive record exceeded the {MAX_ARCHIVE_RECORD_BYTES // 1024} KB limit; only metadata was inspected'))
+    try:
+        return raw.decode('utf-8')
+    except UnicodeDecodeError:
+        add_issue(issues, str(record_path), 'unreadable_archive_record',
+                  L('归档记录元数据编码异常（非 UTF-8）',
+                    'Archive record metadata encoding error (non-UTF-8)'), 'error')
+        return None
 
 
 def parse_frontmatter(content: str, issues: list, skill_path: str) -> dict:
@@ -126,8 +215,8 @@ def parse_frontmatter(content: str, issues: list, skill_path: str) -> dict:
 
         if ':' not in stripped:
             add_issue(issues, skill_path, 'malformed_frontmatter',
-                      L(f'frontmatter 第 {i} 行缺少冒号: "{stripped[:60]}"',
-                        f'Frontmatter line {i} missing colon: "{stripped[:60]}"'))
+                      L(f'frontmatter 第 {i} 行缺少冒号',
+                        f'Frontmatter line {i} missing colon'))
             continue
 
         key, _, value = stripped.partition(':')
@@ -276,20 +365,8 @@ def scan_skill_dir(skill_path: Path, agent: str, scope: str, issues: list) -> di
                   L('技能目录缺少 SKILL.md 文件', 'Skill directory missing SKILL.md file'), 'error')
         return None
 
-    try:
-        content = skill_md.read_text(encoding='utf-8')
-    except PermissionError as e:
-        add_issue(issues, str(skill_md), 'permission_denied',
-                  L(f'无法读取 SKILL.md: {e.strerror}', f'Cannot read SKILL.md: {e.strerror}'), 'error')
-        return None
-    except UnicodeDecodeError as e:
-        add_issue(issues, str(skill_md), 'unreadable_skill_md',
-                  L(f'SKILL.md 编码异常（非 UTF-8）: {e}', f'SKILL.md encoding error (non-UTF-8): {e}'), 'error')
-        return None
-    except Exception as e:
-        add_issue(issues, str(skill_md), 'unreadable_skill_md',
-                  L(f'读取 SKILL.md 失败: {type(e).__name__}: {e}',
-                    f'Failed to read SKILL.md: {type(e).__name__}: {e}'), 'error')
+    content = read_frontmatter(skill_md, issues)
+    if content is None:
         return None
 
     meta = parse_frontmatter(content, issues, str(skill_path))
@@ -410,16 +487,8 @@ def scan_skills_dir(skills_dir: Path, agent: str, scope: str, issues: list) -> l
 
 def scan_archive_record(record_path: Path, agent: str, issues: list) -> dict | None:
     """Read one Markdown archive record written by the archive workflow."""
-    try:
-        content = record_path.read_text(encoding='utf-8')
-    except PermissionError as e:
-        add_issue(issues, str(record_path), 'permission_denied',
-                  L(f'无法读取归档记录: {e.strerror}', f'Cannot read archive record: {e.strerror}'), 'error')
-        return None
-    except (UnicodeDecodeError, OSError) as e:
-        add_issue(issues, str(record_path), 'unreadable_archive_record',
-                  L(f'读取归档记录失败: {type(e).__name__}: {e}',
-                    f'Failed to read archive record: {type(e).__name__}: {e}'), 'error')
+    content = read_archive_metadata(record_path, issues)
+    if content is None:
         return None
 
     def field(*labels: str) -> str:
